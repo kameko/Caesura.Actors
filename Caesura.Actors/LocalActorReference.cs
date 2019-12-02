@@ -14,23 +14,23 @@ namespace Caesura.Actors
         public LocalActorReference(ActorSystem system, string path)
         {
             System = system;
-            Path = new ActorPath(path);
+            Path   = new ActorPath(path);
         }
         
         public LocalActorReference(ActorSystem system, ActorPath path)
         {
             System = system;
-            Path = path;
+            Path   = path;
         }
         
         public void Tell<T>(T data)
         {
-            throw new NotImplementedException();
+            System.Tell<T>(Path, data);
         }
         
         public void Tell<T>(T data, IActorReference sender)
         {
-            throw new NotImplementedException();
+            System.Tell<T>(Path, data, sender);
         }
         
         public Task Ask<T>(T data)
@@ -49,6 +49,11 @@ namespace Caesura.Actors
         }
         
         public Task<R> Ask<T, R>(T data, TimeSpan timeout)
+        {
+            throw new NotImplementedException();
+        }
+        
+        public void InformUnhandledError(Exception e)
         {
             throw new NotImplementedException();
         }

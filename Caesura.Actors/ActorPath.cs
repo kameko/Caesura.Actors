@@ -16,6 +16,11 @@ namespace Caesura.Actors
             Path = path;
         }
         
+        public ActorPath(string path, string name)
+        {
+            Path = $"{path}/{name}";
+        }
+        
         private string GetName()
         {
             var paths = Path.Split('/');

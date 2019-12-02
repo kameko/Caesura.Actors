@@ -14,5 +14,6 @@ namespace Caesura.Actors
         Task Ask<T>(T data, TimeSpan timeout);
         Task<R> Ask<T, R>(T data);
         Task<R> Ask<T, R>(T data, TimeSpan timeout);
+        void InformUnhandledError(Exception e);
     }
 }

@@ -22,7 +22,7 @@ namespace Caesura.Actors
             return new ActorSystem(name);
         }
         
-        public IActorReference NewActor(Func<Actor> factory, string name)
+        public IActorReference NewActor(ActorSchematic schematic, string name)
         {
             throw new NotImplementedException();
         }
@@ -39,14 +39,21 @@ namespace Caesura.Actors
         
         public void DestroyActor(string path) => DestroyActor(new ActorPath(path));
         
-        public void Tell(string path, object data)
+        public void Tell<T>(ActorPath path, T data, IActorReference sender)
         {
             throw new NotImplementedException();
         }
         
-        public Task Ask(string path, object data)
+        public void Tell<T>(ActorPath path, T data)
         {
             throw new NotImplementedException();
+        }
+        
+        public void Tell<T>(string path, T data) => Tell<T>(new ActorPath(path), data);
+        
+        internal void CreateChildActor(Actor actor)
+        {
+            Actors.Add(actor.Path, actor);
         }
     }
 }
