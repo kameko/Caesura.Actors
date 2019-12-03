@@ -145,6 +145,7 @@ namespace Caesura.Actors
         static ActorLogger()
         {
             OnLog = delegate { };
+            DefaultLoggerEnabled = false;
         }
         
         public ActorLogger(Actor owner)
@@ -158,7 +159,7 @@ namespace Caesura.Actors
             switch (token.Level)
             {
                 case ActorLogLevel.Info:
-                    
+                    // No action
                     break;
                 case ActorLogLevel.Warning:
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -171,10 +172,10 @@ namespace Caesura.Actors
                     Console.ForegroundColor = ConsoleColor.White;
                     break;
                 case ActorLogLevel.Debug:
-                    
+                    // No action
                     break;
                 case ActorLogLevel.Verbose:
-                    
+                    // No action
                     break;
             }
             Console.WriteLine(token.ToString());
