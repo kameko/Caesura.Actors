@@ -6,12 +6,14 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
+    // TODO: multithread
+    
     public class ActorSystem
     {
         public string Name { get; private set; }
         private Dictionary<ActorPath, Actor> Actors { get; set; }
         
-        public ActorSystem(string name)
+        internal ActorSystem(string name)
         {
             Name = name;
             Actors = new Dictionary<ActorPath, Actor>();
@@ -29,12 +31,34 @@ namespace Caesura.Actors
         
         public void DestroyActor(IActorReference reference)
         {
-            throw new NotImplementedException();
+            var paths = Actors.Where(x => x.Key == reference.Path);
+            if (paths.Count() > 0)
+            {
+                var path = paths.First().Key;
+                DestroyActor(path);
+            }
         }
         
         public void DestroyActor(ActorPath path)
         {
-            throw new NotImplementedException();
+            if (Actors.ContainsKey(path))
+            {
+                OnDestroyActor(path);
+                Actors.Remove(path);
+            }
+        }
+        
+        private void OnDestroyActor(ActorPath path)
+        {
+            try
+            {
+                var actor = Actors[path];
+                actor.OnDestruction();
+            }
+            catch
+            {
+                // TODO: log exception.
+            }
         }
         
         public void DestroyActor(string path) => DestroyActor(new ActorPath(path));
@@ -51,9 +75,19 @@ namespace Caesura.Actors
         
         public void Tell<T>(string path, T data) => Tell<T>(new ActorPath(path), data);
         
-        internal void CreateChildActor(Actor actor)
+        internal void Unhandled(object message)
         {
+            throw new NotImplementedException();
+        }
+        
+        internal IActorReference CreateChildActor(Actor parent, ActorSchematic child, string child_name)
+        {
+            var path = new ActorPath(parent.Path.Path, child_name);
+            var self = new LocalActorReference(this, parent.Path);
+            var actor = child.Create();
+            actor.Populate(this, self, path);
             Actors.Add(actor.Path, actor);
+            return new LocalActorReference(this, actor.Path);
         }
     }
 }

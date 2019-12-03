@@ -18,8 +18,13 @@ namespace Caesura.Actors
     
     public class ActorCell<T> : ActorCell
     {
-        private Predicate<T> CanHandle { get; set; }
+        private Predicate<T>? CanHandle { get; set; }
         private Action<T> Handler { get; set; }
+        
+        public ActorCell(Actor owner, Action<T> handler) : base(owner)
+        {
+            Handler = handler;
+        }
         
         public ActorCell(Actor owner, Predicate<T> canHandle, Action<T> handler) : base(owner)
         {
@@ -29,6 +34,10 @@ namespace Caesura.Actors
         
         public bool ShouldHandle(T message)
         {
+            if (CanHandle is null)
+            {
+                return true;
+            }
             return CanHandle.Invoke(message);
         }
         

@@ -14,5 +14,20 @@ namespace Caesura.Actors
         {
             Owner = owner;
         }
+        
+        public void StashMessage()
+        {
+            throw new NotImplementedException();
+        }
+        
+        public void Unstash()
+        {
+            throw new NotImplementedException();
+        }
+        
+        public void UnstashAll()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
