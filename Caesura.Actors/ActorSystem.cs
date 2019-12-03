@@ -58,6 +58,7 @@ namespace Caesura.Actors
                     }
                 }
                 
+                // recursively destroy children
                 foreach (var child in actor.InternalChildren)
                 {
                     var cpath = child.Path;
