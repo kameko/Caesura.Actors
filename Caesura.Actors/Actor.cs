@@ -239,7 +239,7 @@ namespace Caesura.Actors
         {
             if (CurrentMessage is { })
             {
-                System.Unhandled(Self, CurrentMessage);
+                System.Unhandled(Sender, Self, CurrentMessage);
             }
         }
         

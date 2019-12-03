@@ -14,15 +14,22 @@ namespace Caesura.Actors
         public ActorPath Location { get; private set; }
         private Dictionary<ActorPath, Actor> Actors { get; set; }
         
+        private RootSupervisor Root { get; set; }
+        private LostLetters Lost { get; set; }
+        
         internal ActorSystem(string name)
         {
             Name     = ActorPath.Sanitize(name);
             Location = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
             Actors   = new Dictionary<ActorPath, Actor>();
             
-            var root = new RootSupervisor(this);
-            root.Populate(this, ActorReferences.Nobody, Location);
-            Actors.Add(Location, root);
+            Root = new RootSupervisor(this);
+            Root.Populate(this, ActorReferences.Nobody, Location);
+            Actors.Add(Location, Root);
+            
+            Lost = new LostLetters(this);
+            Lost.Populate(this, new LocalActorReference(this, Root.Path), new ActorPath(Location.Path, "lost-letters"));
+            Actors.Add(Lost.Path, Lost);
         }
         
         public static ActorSystem Create(string name)
@@ -96,21 +103,23 @@ namespace Caesura.Actors
             throw new NotImplementedException();
         }
         
-        internal void EnqueueForMessageProcessing<T>(ActorPath path, T data, IActorReference sender)
+        internal void EnqueueForMessageProcessing<T>(ActorPath receiver, T data, IActorReference sender)
         {
-            if (!Actors.ContainsKey(path))
+            if (!Actors.ContainsKey(receiver))
             {
                 // TODO: ask the network if they have this actor, otherwise...
-                Unhandled(sender, (object)data!);
+                var recpath = new LocalActorReference(this, receiver);
+                Unhandled(sender, recpath, (object)data!);
                 return;
             }
             
             throw new NotImplementedException();
         }
         
-        internal void Unhandled(IActorReference sender, object message)
+        internal void Unhandled(IActorReference sender, IActorReference receiver, object message)
         {
-            throw new NotImplementedException();
+            var lost = new LostLetter(sender, receiver, message);
+            EnqueueForMessageProcessing(Lost.Path, lost, sender);
         }
         
         internal void InformUnhandledError(ActorPath receiver, IActorReference faulted_actor, Exception e)
