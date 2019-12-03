@@ -109,6 +109,19 @@ namespace Caesura.Actors
             }
         }
         
+        protected void TellChildren<T>(T data)
+        {
+            foreach (var child in Children)
+            {
+                child.Tell(data, Self);
+            }
+        }
+        
+        protected void Tattle<T>(T data)
+        {
+            Parent.Tell(data, Self);
+        }
+        
         protected void Respond<T>(T data)
         {
             Sender.Tell(data, Self);
