@@ -69,22 +69,22 @@ namespace Caesura.Actors
             actor.Tell(data, Self);
         }
         
-        protected void Ask<T>(IActorReference actor, T data, Action continueWith)
+        protected void Ask<T>(IActorReference actor, T data, Action<T> continueWith)
         {
             actor.Ask(data, Self, continueWith);
         }
         
-        protected void Ask<T>(IActorReference actor, T data, Action continueWith, TimeSpan timeout)
+        protected void Ask<T>(IActorReference actor, T data, Action<T> continueWith, TimeSpan timeout)
         {
             actor.Ask(data, Self, continueWith, timeout);
         }
         
-        protected R Ask<T, R>(IActorReference actor, T data, Action<R> continueWith)
+        protected R Ask<T, R>(IActorReference actor, T data, Func<T, R> continueWith)
         {
-            return actor.Ask(actor, Self, continueWith);
+            return actor.Ask(data, Self, continueWith);
         }
         
-        protected R Ask<T, R>(IActorReference actor, T data, Action<R> continueWith, TimeSpan timeout)
+        protected R Ask<T, R>(IActorReference actor, T data, Func<T, R> continueWith, TimeSpan timeout)
         {
             return actor.Ask(data, Self, continueWith, timeout);
         }

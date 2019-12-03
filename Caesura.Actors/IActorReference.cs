@@ -9,10 +9,10 @@ namespace Caesura.Actors
     {
         ActorPath Path { get; }
         void Tell<T>(T data, IActorReference sender);
-        void Ask<T>(T data, IActorReference sender, Action continueWith);
-        void Ask<T>(T data, IActorReference sender, Action continueWith, TimeSpan timeout);
-        R Ask<T, R>(T data, IActorReference sender, Action<R> continueWith);
-        R Ask<T, R>(T data, IActorReference sender, Action<R> continueWith, TimeSpan timeout);
+        void Ask<T>(T data, IActorReference sender, Action<T> continueWith);
+        void Ask<T>(T data, IActorReference sender, Action<T> continueWith, TimeSpan timeout);
+        R Ask<T, R>(T data, IActorReference sender, Func<T, R> continueWith);
+        R Ask<T, R>(T data, IActorReference sender, Func<T, R> continueWith, TimeSpan timeout);
         void InformUnhandledError(Exception e);
     }
 }
