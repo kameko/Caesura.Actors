@@ -7,14 +7,11 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    // TODO: stall/wait method that doesn't use async but still
-    // allows the system to process other messages while it keeps
-    // the actor in a non-blocking stasis.
-    
     public abstract class Actor : ITellable
     {
         public ActorPath Path { get; private set; }
         private ActorSystem System { get; set; }
+        protected ActorLogger ActorLog { get; private set; }
         protected IActorReference Sender { get; private set; }
         protected IActorReference Self { get; private set; }
         protected IActorReference Parent => InternalParent;
@@ -29,6 +26,7 @@ namespace Caesura.Actors
         public Actor()
         {
             Path             = null!;
+            ActorLog         = null!;
             System           = null!;
             Sender           = null!;
             Self             = null!;
@@ -41,6 +39,7 @@ namespace Caesura.Actors
         internal void Populate(ActorSystem system, IActorReference parent, ActorPath path)
         {
             Path             = path;
+            ActorLog         = new ActorLogger(this);
             System           = system;
             Self             = new LocalActorReference(system, path);
             InternalParent   = parent;
@@ -49,19 +48,63 @@ namespace Caesura.Actors
             Cells            = new List<ActorCell>();
         }
         
-        public virtual void PreReload()
+        protected virtual void PreReload()
         {
             
         }
         
-        public virtual void PostReload()
+        protected virtual void PostReload()
         {
             
         }
         
-        public virtual void OnDestruction()
+        protected virtual void OnDestruction()
         {
             
+        }
+        
+        // return Success if it didn't error so we can call PostReload,
+        // otherwise kill the actor.
+        internal ActorProcessingResult CallPreReload()
+        {
+            try
+            {
+                PreReload();
+                return ActorProcessingResult.Success;
+            }
+            catch
+            {
+                // TODO: log error
+                return ActorProcessingResult.Errored;
+            }
+        }
+        
+        // If this returns Errored, we destroy the actor. Otherwise
+        // it would be an endless loop of erroring.
+        internal ActorProcessingResult CallPostReload()
+        {
+            try
+            {
+                PostReload();
+                return ActorProcessingResult.Success;
+            }
+            catch
+            {
+                // TODO: log error
+                return ActorProcessingResult.Errored;
+            }
+        }
+        
+        internal void CallOnDestruction()
+        {
+            try
+            {
+                OnDestruction();
+            }
+            catch
+            {
+                // TODO: log error
+            }
         }
         
         protected void Tell<T>(IActorReference actor, T data)
@@ -69,29 +112,34 @@ namespace Caesura.Actors
             actor.Tell(data, Self);
         }
         
-        protected void Ask<T>(IActorReference actor, T data, Action<T> continueWith)
+        protected void Ask<T>(IActorReference actor, T data, Action<T> continue_with)
         {
-            actor.Ask(data, Self, continueWith);
+            actor.Ask(data, Self, continue_with);
         }
         
-        protected void Ask<T>(IActorReference actor, T data, Action<T> continueWith, TimeSpan timeout)
+        protected void Ask<T>(IActorReference actor, T data, Action<T> continue_with, TimeSpan timeout)
         {
-            actor.Ask(data, Self, continueWith, timeout);
+            actor.Ask(data, Self, continue_with, timeout);
         }
         
-        protected R Ask<T, R>(IActorReference actor, T data, Func<T, R> continueWith)
+        protected R Ask<T, R>(IActorReference actor, T data, Func<T, R> continue_with)
         {
-            return actor.Ask(data, Self, continueWith);
+            return actor.Ask(data, Self, continue_with);
         }
         
-        protected R Ask<T, R>(IActorReference actor, T data, Func<T, R> continueWith, TimeSpan timeout)
+        protected R Ask<T, R>(IActorReference actor, T data, Func<T, R> continue_with, TimeSpan timeout)
         {
-            return actor.Ask(data, Self, continueWith, timeout);
+            return actor.Ask(data, Self, continue_with, timeout);
         }
         
         protected void Forward<T>(IActorReference actor, T data)
         {
             actor.Tell(data, Sender);
+        }
+        
+        protected void Wait(TimeSpan time, Action continue_with)
+        {
+            System.EnqueueWait(this, time, continue_with);
         }
         
         protected IActorReference NewChild(ActorSchematic schematic, string name)
@@ -124,7 +172,7 @@ namespace Caesura.Actors
             OnAny = handler;
         }
         
-        internal void ProcessMessage<T>(IActorReference sender, T message)
+        internal ActorProcessingResult ProcessMessage<T>(IActorReference sender, T message)
         {
             Sender = sender;
             CurrentMessage = (object)message!;
@@ -170,9 +218,18 @@ namespace Caesura.Actors
                 }
             }
             
-            if (!handled)
+            if (errored)
+            {
+                return ActorProcessingResult.Errored;
+            }
+            else if (!handled)
             {
                 Unhandled();
+                return ActorProcessingResult.Unhandled;
+            }
+            else
+            {
+                return ActorProcessingResult.Success;
             }
         }
         

@@ -73,18 +73,19 @@ namespace Caesura.Actors
         
         private void OnDestroyActor(ActorPath path)
         {
-            try
+            if (Actors.ContainsKey(path))
             {
                 var actor = Actors[path];
-                actor.OnDestruction();
-            }
-            catch
-            {
-                // TODO: log exception.
+                actor.CallOnDestruction();
             }
         }
         
         public void DestroyActor(string path) => DestroyActor(new ActorPath(path));
+        
+        internal void EnqueueWait(Actor actor, TimeSpan time, Action continue_with)
+        {
+            throw new NotImplementedException();
+        }
         
         internal void EnqueueForMessageProcessing<T>(ActorPath path, T data, IActorReference sender)
         {

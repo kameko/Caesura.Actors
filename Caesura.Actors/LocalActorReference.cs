@@ -28,22 +28,22 @@ namespace Caesura.Actors
             System.EnqueueForMessageProcessing<T>(Path, data, sender);
         }
         
-        public void Ask<T>(T data, IActorReference sender, Action<T> continueWith)
+        public void Ask<T>(T data, IActorReference sender, Action<T> continue_with)
         {
             throw new NotImplementedException();
         }
         
-        public void Ask<T>(T data, IActorReference sender, Action<T> continueWith, TimeSpan timeout)
+        public void Ask<T>(T data, IActorReference sender, Action<T> continue_with, TimeSpan timeout)
         {
             throw new NotImplementedException();
         }
         
-        public R Ask<T, R>(T data, IActorReference sender, Func<T, R> continueWith)
+        public R Ask<T, R>(T data, IActorReference sender, Func<T, R> continue_with)
         {
             throw new NotImplementedException();
         }
         
-        public R Ask<T, R>(T data, IActorReference sender, Func<T, R> continueWith, TimeSpan timeout)
+        public R Ask<T, R>(T data, IActorReference sender, Func<T, R> continue_with, TimeSpan timeout)
         {
             throw new NotImplementedException();
         }
