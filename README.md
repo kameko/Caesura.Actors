@@ -1,5 +1,5 @@
 
-# Caesura.Actors
+![logo](Tools/logo.png)
 
 A simple actor system inspired by Akka.NET, designed to be simpler, easier to use, more predictable, less overly-engineered, and designed with plugins (AssemblyLoadContext) in mind.
 
@@ -26,7 +26,7 @@ I love the Akka.NET project, it's a wonderful project, I'm just frustrated :)
 
 ## Copyright and license
 
-Caesura.Actors is copyright 2019 Kameko. Caesura.Actors is licensed under the Microsoft Public License (MS-PL).
+Caesura.Actors is copyright 2019 Kameko. All images and logos are copyright 2019 Kameko. Source code is licensed under the Microsoft Public License (MS-PL).
 
 ## Usage
 
