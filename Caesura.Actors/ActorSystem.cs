@@ -177,5 +177,17 @@ namespace Caesura.Actors
             Actors.Add(actor.Path, actor);
             return new LocalActorReference(this, actor.Path);
         }
+        
+        internal void BeginSessionPersistence(Actor actor)
+        {
+            // TODO: tell the scheduler we're not done processing.
+            throw new NotImplementedException();
+        }
+        
+        internal void EndSessionPersistence(Actor actor)
+        {
+            // TODO: tell the scheduler we're ready for a new message.
+            throw new NotImplementedException();
+        }
     }
 }

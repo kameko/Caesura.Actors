@@ -325,14 +325,12 @@ namespace Caesura.Actors
         
         protected void BeginSessionPersistence()
         {
-            // TODO: tell the scheduler we're not done processing.
-            throw new NotImplementedException();
+            System.BeginSessionPersistence(this);
         }
         
         protected void EndSessionPersistence()
         {
-            // TODO: tell the scheduler we're ready for a new message.
-            throw new NotImplementedException();
+            System.EndSessionPersistence(this);
         }
         
         internal void InformParentOfUnhandledError(Exception e)
