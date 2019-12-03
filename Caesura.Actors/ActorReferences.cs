@@ -33,26 +33,26 @@ namespace Caesura.Actors
                 // Do nothing.
             }
             
-            public void Ask<T>(T data, IActorReference sender, Action<T> continue_with)
+            public void Ask<T>(T data, IActorReference sender, Action<ActorContinuation, T> continue_with)
             {
                 // Do nothing.
             }
             
-            public void Ask<T>(T data, IActorReference sender, Action<T> continue_with, TimeSpan timeout)
+            public void Ask<T>(T data, IActorReference sender, Action<ActorContinuation, T> continue_with, TimeSpan timeout)
             {
                 // Do nothing.
             }
             
-            public R Ask<T, R>(T data, IActorReference sender, Func<T, R> continue_with)
+            public R Ask<T, R>(T data, IActorReference sender, Func<ActorContinuation, T, R> continue_with)
             {
                 // Do nothing.
-                return continue_with.Invoke(data);
+                return continue_with.Invoke(ActorContinuation.NoContinuation(), data);
             }
             
-            public R Ask<T, R>(T data, IActorReference sender, Func<T, R> continue_with, TimeSpan timeout)
+            public R Ask<T, R>(T data, IActorReference sender, Func<ActorContinuation, T, R> continue_with, TimeSpan timeout)
             {
                 // Do nothing.
-                return continue_with.Invoke(data);
+                return continue_with.Invoke(ActorContinuation.NoContinuation(), data);
             }
             
             public void InformUnhandledError(IActorReference sender, Exception e)

@@ -28,7 +28,7 @@ namespace Caesura.Actors
             System.EnqueueForMessageProcessing<T>(Path, data, sender);
         }
         
-        public void Ask<T>(T data, IActorReference sender, Action<T> continue_with)
+        public void Ask<T>(T data, IActorReference sender, Action<ActorContinuation, T> continue_with)
         {
             // TODO: have this send a special internal message type that will get sent back
             // to the actor that requested it and run the callback inside of the actor.
@@ -36,17 +36,17 @@ namespace Caesura.Actors
             throw new NotImplementedException();
         }
         
-        public void Ask<T>(T data, IActorReference sender, Action<T> continue_with, TimeSpan timeout)
+        public void Ask<T>(T data, IActorReference sender, Action<ActorContinuation, T> continue_with, TimeSpan timeout)
         {
             throw new NotImplementedException();
         }
         
-        public R Ask<T, R>(T data, IActorReference sender, Func<T, R> continue_with)
+        public R Ask<T, R>(T data, IActorReference sender, Func<ActorContinuation, T, R> continue_with)
         {
             throw new NotImplementedException();
         }
         
-        public R Ask<T, R>(T data, IActorReference sender, Func<T, R> continue_with, TimeSpan timeout)
+        public R Ask<T, R>(T data, IActorReference sender, Func<ActorContinuation, T, R> continue_with, TimeSpan timeout)
         {
             throw new NotImplementedException();
         }

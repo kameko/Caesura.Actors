@@ -7,7 +7,10 @@ namespace Caesura.Actors
     using System.Threading;
     using System.Threading.Tasks;
     
-    // TODO: multithread
+    // TODO: scheduler
+    // TODO: persistance handling, by saving the user's
+    // IStateSerializeHandler/IStateDeserializeHandler
+    // objects
     
     public class ActorSystem
     {
@@ -112,13 +115,15 @@ namespace Caesura.Actors
             throw new NotImplementedException();
         }
         
-        internal void EnqueueWait(Actor actor, TimeSpan time, Action continue_with)
+        internal void EnqueueWait(Actor actor, TimeSpan time, Action<ActorContinuation> continue_with)
         {
             // TODO: have this send a special internal message type that will get
             // sent back to the actor and run it's continue_with inside of the
             // actor in a special internal Receive method.
             // We'll send the message back to the actor after the timespan ends, which
             // will be enqueued in a custom queue system.
+            // Don't forget to save the current message somewhere so the actor doesn't
+            // see the new internal message. Maybe have the internal message hold it.
             
             throw new NotImplementedException();
         }
