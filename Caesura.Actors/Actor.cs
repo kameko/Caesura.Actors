@@ -197,6 +197,18 @@ namespace Caesura.Actors
             Cells.Add(cell);
         }
         
+        protected void ReceiveAsync<T>(Predicate<T> can_handle, Func<T, Task> handler)
+        {
+            var cell = new AsyncActorCell<T>(this, can_handle, handler);
+            Cells.Add(cell);
+        }
+        
+        protected void ReceiveAsync<T>(Func<T, Task> handler)
+        {
+            var cell = new AsyncActorCell<T>(this, handler);
+            Cells.Add(cell);
+        }
+        
         protected void ReceiveAny(Action<object> handler)
         {
             OnAny = handler;
@@ -230,6 +242,41 @@ namespace Caesura.Actors
                     errored = true;
                     InformParentOfUnhandledError(e);
                     break;
+                }
+            }
+            
+            if (!handled && !errored)
+            {
+                var async_cells = Cells.Where(x => x is ActorCell<T>) as IEnumerable<AsyncActorCell<T>>;
+                foreach (var cell in async_cells!)
+                {
+                    try
+                    {
+                        // TODO: make sure this works
+                        // TODO: handle exceptions
+                        
+                        if (cell.ShouldHandle(message))
+                        {
+                            handled = true;
+                            BeginSessionPersistence();
+                            cell.Handle(message).ContinueWith(task =>
+                            {
+                                EndSessionPersistence();
+                            })
+                            .ConfigureAwait(false);
+                            break;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        errored = true;
+                        InformParentOfUnhandledError(e);
+                        break;
+                    }
                 }
             }
             
@@ -274,6 +321,18 @@ namespace Caesura.Actors
         protected void DestroySelf()
         {
             System.DestroyActor(Self);
+        }
+        
+        protected void BeginSessionPersistence()
+        {
+            // TODO: tell the scheduler we're not done processing.
+            throw new NotImplementedException();
+        }
+        
+        protected void EndSessionPersistence()
+        {
+            // TODO: tell the scheduler we're ready for a new message.
+            throw new NotImplementedException();
         }
         
         internal void InformParentOfUnhandledError(Exception e)

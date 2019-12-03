@@ -6,7 +6,7 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    public class ActorCell
+    internal class ActorCell
     {
         public Actor Owner { get; set; }
         
@@ -16,7 +16,7 @@ namespace Caesura.Actors
         }
     }
     
-    public class ActorCell<T> : ActorCell
+    internal class ActorCell<T> : ActorCell
     {
         private Predicate<T>? CanHandle { get; set; }
         private Action<T> Handler { get; set; }
@@ -26,9 +26,9 @@ namespace Caesura.Actors
             Handler = handler;
         }
         
-        public ActorCell(Actor owner, Predicate<T> canHandle, Action<T> handler) : base(owner)
+        public ActorCell(Actor owner, Predicate<T> can_handle, Action<T> handler) : base(owner)
         {
-            CanHandle = canHandle;
+            CanHandle = can_handle;
             Handler = handler;
         }
         
@@ -44,6 +44,37 @@ namespace Caesura.Actors
         public void Handle(T message)
         {
             Handler.Invoke(message);
+        }
+    }
+    
+    internal class AsyncActorCell<T> : ActorCell
+    {
+        private Predicate<T>? CanHandle { get; set; }
+        private Func<T, Task> Handler { get; set; }
+        
+        public AsyncActorCell(Actor owner, Func<T, Task> handler) : base(owner)
+        {
+            Handler = handler;
+        }
+        
+        public AsyncActorCell(Actor owner, Predicate<T> can_handle, Func<T, Task> handler) : base(owner)
+        {
+            CanHandle = can_handle;
+            Handler = handler;
+        }
+        
+        public bool ShouldHandle(T message)
+        {
+            if (CanHandle is null)
+            {
+                return true;
+            }
+            return CanHandle.Invoke(message);
+        }
+        
+        public Task Handle(T message)
+        {
+            return Handler.Invoke(message);
         }
     }
 }
