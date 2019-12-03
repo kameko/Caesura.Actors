@@ -122,6 +122,26 @@ namespace Caesura.Actors
         private Actor Owner { get; set; }
         public static event Action<ActorLogToken> OnLog;
         
+        private static bool default_logger_enabled;
+        public static bool DefaultLoggerEnabled
+        {
+            get => default_logger_enabled;
+            set
+            {
+                // prevent the logger from being added multiple times
+                // if the user sets it to true multiple times.
+                if (value && !default_logger_enabled)
+                {
+                    OnLog += DefaultLogger;
+                }
+                else if (!value && default_logger_enabled)
+                {
+                    OnLog -= DefaultLogger;
+                }
+                default_logger_enabled = value;
+            }
+        }
+        
         static ActorLogger()
         {
             OnLog = delegate { };
@@ -131,6 +151,34 @@ namespace Caesura.Actors
         {
             Owner = owner;
             
+        }
+        
+        private static void DefaultLogger(ActorLogToken token)
+        {
+            switch (token.Level)
+            {
+                case ActorLogLevel.Info:
+                    
+                    break;
+                case ActorLogLevel.Warning:
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    break;
+                case ActorLogLevel.Error:
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    break;
+                case ActorLogLevel.Fatal:
+                    Console.BackgroundColor = ConsoleColor.DarkRed;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+                case ActorLogLevel.Debug:
+                    
+                    break;
+                case ActorLogLevel.Verbose:
+                    
+                    break;
+            }
+            Console.WriteLine(token.ToString());
+            Console.ResetColor();
         }
         
         private void Construct(
