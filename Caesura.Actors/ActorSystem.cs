@@ -44,6 +44,25 @@ namespace Caesura.Actors
             if (Actors.ContainsKey(path))
             {
                 OnDestroyActor(path);
+                
+                var actor = Actors[path];
+                
+                if (Actors.ContainsKey(actor.InternalParent.Path))
+                {
+                    var parent = Actors[actor.InternalParent.Path];
+                    var child_to_remove = parent.InternalChildren.Find(x => x.Path == path);
+                    if (child_to_remove is { })
+                    {
+                        parent.InternalChildren.Remove(child_to_remove);
+                    }
+                }
+                
+                foreach (var child in actor.InternalChildren)
+                {
+                    var cpath = child.Path;
+                    DestroyActor(path);
+                }
+                
                 Actors.Remove(path);
             }
         }

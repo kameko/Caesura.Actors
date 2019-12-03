@@ -12,33 +12,35 @@ namespace Caesura.Actors
         public ActorPath Path { get; private set; }
         private ActorSystem System { get; set; }
         protected IActorReference Self { get; private set; }
-        protected IActorReference Parent { get; private set; }
-        protected IReadOnlyList<IActorReference> Children { get; private set; }
+        protected IActorReference Parent => InternalParent;
+        protected IReadOnlyList<IActorReference> Children => InternalChildren;
         protected Stash Stash { get; private set; }
         private List<ActorCell> Cells { get; set; }
         private Action<object>? OnAny { get; set; }
         private object? CurrentMessage { get; set; }
+        internal IActorReference InternalParent { get; set; }
+        internal List<IActorReference> InternalChildren { get; set; }
         
         internal Actor()
         {
-            Path     = null!;
-            System   = null!;
-            Self     = null!;
-            Parent   = null!;
-            Children = null!;
-            Stash    = null!;
-            Cells    = null!;
+            Path             = null!;
+            System           = null!;
+            Self             = null!;
+            InternalParent   = null!;
+            InternalChildren = null!;
+            Stash            = null!;
+            Cells            = null!;
         }
         
         internal void Populate(ActorSystem system, IActorReference parent, ActorPath path)
         {
-            Path     = path;
-            Self     = new LocalActorReference(system, path);
-            System   = system;
-            Parent   = parent;
-            Children = new List<IActorReference>();
-            Stash    = new Stash(this);
-            Cells    = new List<ActorCell>();
+            Path             = path;
+            Self             = new LocalActorReference(system, path);
+            System           = system;
+            InternalParent   = parent;
+            InternalChildren = new List<IActorReference>();
+            Stash            = new Stash(this);
+            Cells            = new List<ActorCell>();
         }
         
         public virtual void PreReload()
@@ -58,7 +60,8 @@ namespace Caesura.Actors
         
         protected IActorReference NewChild(ActorSchematic schematic, string name)
         {
-            return System.CreateChildActor(this, schematic, name);
+            var child = System.CreateChildActor(this, schematic, name);
+            return child;
         }
         
         protected void Become(Action method)
@@ -90,6 +93,7 @@ namespace Caesura.Actors
             CurrentMessage = (object)message!;
             
             var handled = false;
+            var errored = false;
             var cells = Cells.Where(x => x is ActorCell<T>) as IEnumerable<ActorCell<T>>;
             foreach (var cell in cells!)
             {
@@ -108,24 +112,24 @@ namespace Caesura.Actors
                 }
                 catch (Exception e)
                 {
+                    errored = true;
                     InformParentOfUnhandledError(e);
                     break;
                 }
             }
             
-            if (!handled)
+            // If no Cell handled the message without erroring, try handling it here.
+            if ((!handled) && (!errored) && !(OnAny is null))
             {
-                if (!(OnAny is null))
+                handled = true;
+                try
                 {
-                    handled = true;
-                    try
-                    {
-                        OnAny.Invoke((object)message!);
-                    }
-                    catch (Exception e)
-                    {
-                        InformParentOfUnhandledError(e);
-                    }
+                    OnAny.Invoke((object)message!);
+                }
+                catch (Exception e)
+                {
+                    errored = true;
+                    InformParentOfUnhandledError(e);
                 }
             }
             
@@ -150,7 +154,7 @@ namespace Caesura.Actors
         
         internal void InformParentOfUnhandledError(Exception e)
         {
-            Parent.InformUnhandledError(e);
+            InternalParent.InformUnhandledError(e);
         }
     }
 }
