@@ -49,6 +49,7 @@ namespace Caesura.Actors
                 
                 if (Actors.ContainsKey(actor.InternalParent.Path))
                 {
+                    // remove self from parent
                     var parent = Actors[actor.InternalParent.Path];
                     var child_to_remove = parent.InternalChildren.Find(x => x.Path == path);
                     if (child_to_remove is { })
