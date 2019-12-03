@@ -48,9 +48,14 @@ namespace Caesura.Actors
             throw new NotImplementedException();
         }
         
-        public void InformUnhandledError(Exception e)
+        public void InformUnhandledError(IActorReference sender, Exception e)
         {
-            throw new NotImplementedException();
+            System.InformUnhandledError(Path, sender, e);
+        }
+        
+        public void Destroy()
+        {
+            System.DestroyActor(this);
         }
     }
 }

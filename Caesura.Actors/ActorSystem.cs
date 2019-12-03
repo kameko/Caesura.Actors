@@ -17,8 +17,12 @@ namespace Caesura.Actors
         internal ActorSystem(string name)
         {
             Name     = ActorPath.Sanitize(name);
-            Location = new ActorPath($"caesura://{Name}/");
+            Location = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
             Actors   = new Dictionary<ActorPath, Actor>();
+            
+            var root = new RootSupervisor(this);
+            root.Populate(this, ActorReferences.Nobody, Location);
+            Actors.Add(Location, root);
         }
         
         public static ActorSystem Create(string name)
@@ -82,6 +86,11 @@ namespace Caesura.Actors
         
         public void DestroyActor(string path) => DestroyActor(new ActorPath(path));
         
+        public void Shutdown()
+        {
+            throw new NotImplementedException();
+        }
+        
         internal void EnqueueWait(Actor actor, TimeSpan time, Action continue_with)
         {
             throw new NotImplementedException();
@@ -89,12 +98,31 @@ namespace Caesura.Actors
         
         internal void EnqueueForMessageProcessing<T>(ActorPath path, T data, IActorReference sender)
         {
+            if (!Actors.ContainsKey(path))
+            {
+                // TODO: ask the network if they have this actor, otherwise...
+                Unhandled(sender, (object)data!);
+                return;
+            }
+            
             throw new NotImplementedException();
         }
         
-        internal void Unhandled(object message)
+        internal void Unhandled(IActorReference sender, object message)
         {
             throw new NotImplementedException();
+        }
+        
+        internal void InformUnhandledError(ActorPath receiver, IActorReference faulted_actor, Exception e)
+        {
+            if (!Actors.ContainsKey(receiver))
+            {
+                return;
+            }
+            
+            var rec = Actors[receiver];
+            var msg = new Fault(faulted_actor, e);
+            EnqueueForMessageProcessing(receiver, msg, faulted_actor);
         }
         
         internal IActorReference CreateChildActor(Actor parent, ActorSchematic child, string child_name)

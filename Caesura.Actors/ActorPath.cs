@@ -8,6 +8,8 @@ namespace Caesura.Actors
     
     public class ActorPath
     {
+        public static string ProtocolName => "caesura";
+        
         public string Path { get; private set; }
         public string Name => GetName();
         public string Location => GetLocation();
@@ -32,6 +34,11 @@ namespace Caesura.Actors
         
         private string GetName()
         {
+            if (Path.EndsWith('/') && Path.Count(c => c == '/') == 3)
+            {
+                // this is the root actor (path is "caesura://something/")
+                return "/";
+            }
             if (Path.EndsWith('/'))
             {
                 return string.Empty;

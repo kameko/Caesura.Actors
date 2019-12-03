@@ -72,9 +72,9 @@ namespace Caesura.Actors
                 PreReload();
                 return ActorProcessingResult.Success;
             }
-            catch
+            catch (Exception e)
             {
-                // TODO: log error
+                ActorLog.Verbose(e, $"Error calling {nameof(PreReload)}");
                 return ActorProcessingResult.Errored;
             }
         }
@@ -88,22 +88,24 @@ namespace Caesura.Actors
                 PostReload();
                 return ActorProcessingResult.Success;
             }
-            catch
+            catch (Exception e)
             {
-                // TODO: log error
+                ActorLog.Verbose(e, $"Error calling {nameof(PostReload)}");
                 return ActorProcessingResult.Errored;
             }
         }
         
+        // We don't care if this works or not because the actor is
+        // getting destroyed anyway.
         internal void CallOnDestruction()
         {
             try
             {
                 OnDestruction();
             }
-            catch
+            catch (Exception e)
             {
-                // TODO: log error
+                ActorLog.Verbose(e, $"Error calling {nameof(OnDestruction)}");
             }
         }
         
@@ -237,7 +239,7 @@ namespace Caesura.Actors
         {
             if (CurrentMessage is { })
             {
-                System.Unhandled(CurrentMessage);
+                System.Unhandled(Self, CurrentMessage);
             }
         }
         
@@ -248,7 +250,7 @@ namespace Caesura.Actors
         
         internal void InformParentOfUnhandledError(Exception e)
         {
-            InternalParent.InformUnhandledError(e);
+            InternalParent.InformUnhandledError(Self, e);
         }
     }
 }
