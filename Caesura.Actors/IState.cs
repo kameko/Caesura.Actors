@@ -6,12 +6,12 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    public interface IStateSerializeOptions
+    public interface IStateSerializeHandler
     {
         
     }
     
-    public interface IStateDeserializeOptions
+    public interface IStateDeserializeHandler
     {
         
     }
@@ -23,9 +23,9 @@ namespace Caesura.Actors
     
     public interface IState<TData, TSerialized> : IState
     {
-        TSerialized Serialized();
-        TSerialized Serialized(IStateSerializeOptions options);
+        TSerialized Serialize();
+        TSerialized Serialize(IStateSerializeHandler options);
         TData Deserialize();
-        TData Deserialize(IStateDeserializeOptions options);
+        TData Deserialize(IStateDeserializeHandler options);
     }
 }
