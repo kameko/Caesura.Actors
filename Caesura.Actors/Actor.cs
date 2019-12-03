@@ -63,6 +63,16 @@ namespace Caesura.Actors
             
         }
         
+        public virtual IState Snapshot()
+        {
+            return default!;
+        }
+        
+        public virtual void LoadState(IState state)
+        {
+            
+        }
+        
         // return Success if it didn't error so we can call PostReload,
         // otherwise kill the actor.
         internal ActorProcessingResult CallPreReload()
