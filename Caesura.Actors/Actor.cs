@@ -109,6 +109,11 @@ namespace Caesura.Actors
             }
         }
         
+        protected void Respond<T>(T data)
+        {
+            Sender.Tell(data, Self);
+        }
+        
         protected void Tell<T>(IActorReference actor, T data)
         {
             actor.Tell(data, Self);
@@ -157,9 +162,9 @@ namespace Caesura.Actors
             method.Invoke();
         }
         
-        protected void Receive<T>(Predicate<T> canHandle, Action<T> handler)
+        protected void Receive<T>(Predicate<T> can_handle, Action<T> handler)
         {
-            var cell = new ActorCell<T>(this, canHandle, handler);
+            var cell = new ActorCell<T>(this, can_handle, handler);
             Cells.Add(cell);
         }
         
