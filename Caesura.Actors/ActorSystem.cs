@@ -13,15 +13,17 @@ namespace Caesura.Actors
         public string Name { get; private set; }
         public ActorPath Location { get; private set; }
         private Dictionary<ActorPath, Actor> Actors { get; set; }
+        private List<ActorQueueToken> ActorQueue { get; set; }
         
         private RootSupervisor Root { get; set; }
         private LostLetters Lost { get; set; }
         
         internal ActorSystem(string name)
         {
-            Name     = ActorPath.Sanitize(name);
-            Location = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
-            Actors   = new Dictionary<ActorPath, Actor>();
+            Name       = ActorPath.Sanitize(name);
+            Location   = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
+            Actors     = new Dictionary<ActorPath, Actor>();
+            ActorQueue = new List<ActorQueueToken>();
             
             Root = new RootSupervisor(this);
             Root.Populate(this, ActorReferences.Nobody, Location);
@@ -39,7 +41,8 @@ namespace Caesura.Actors
         
         public IActorReference NewActor(ActorSchematic schematic, string name)
         {
-            throw new NotImplementedException();
+            var child = CreateChildActor(Root, schematic, name);
+            return child;
         }
         
         public void DestroyActor(IActorReference reference)
@@ -113,7 +116,8 @@ namespace Caesura.Actors
                 return;
             }
             
-            throw new NotImplementedException();
+            var token = new ActorQueueToken(this, receiver, typeof(T), (object)data!, sender);
+            ActorQueue.Add(token);
         }
         
         internal void Unhandled(IActorReference sender, IActorReference receiver, object message)
@@ -139,6 +143,14 @@ namespace Caesura.Actors
             var path = new ActorPath(parent.Path.Path, child_name);
             var self = new LocalActorReference(this, parent.Path);
             var actor = child.Create();
+            
+            if (actor is null)
+            {
+                return ActorReferences.Nobody;
+            }
+            
+            // TODO: save schematic for revival
+            
             actor.Populate(this, self, path);
             Actors.Add(actor.Path, actor);
             return new LocalActorReference(this, actor.Path);

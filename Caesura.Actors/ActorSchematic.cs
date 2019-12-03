@@ -15,9 +15,18 @@ namespace Caesura.Actors
             Factory = factory;
         }
         
-        internal Actor Create()
+        internal Actor? Create()
         {
-            return Factory.Invoke();
+            try
+            {
+                var actor = Factory.Invoke();
+                return actor;
+            }
+            catch
+            {
+                // TODO: log error.
+                return null;
+            }
         }
     }
 }
