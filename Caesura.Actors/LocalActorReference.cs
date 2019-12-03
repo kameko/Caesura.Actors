@@ -30,6 +30,9 @@ namespace Caesura.Actors
         
         public void Ask<T>(T data, IActorReference sender, Action<T> continue_with)
         {
+            // TODO: have this send a special internal message type that will get sent back
+            // to the actor that requested it and run the callback inside of the actor.
+            
             throw new NotImplementedException();
         }
         

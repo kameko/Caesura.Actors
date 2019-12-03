@@ -4,6 +4,7 @@ namespace Caesura.Actors
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     
     // TODO: multithread
@@ -37,6 +38,16 @@ namespace Caesura.Actors
         public static ActorSystem Create(string name)
         {
             return new ActorSystem(name);
+        }
+        
+        public void WaitForSystemShutdown()
+        {
+            throw new NotImplementedException();
+        }
+        
+        public void WaitForSystemShutdown(CancellationTokenSource cancel_token)
+        {
+            throw new NotImplementedException();
         }
         
         public IActorReference NewActor(ActorSchematic schematic, string name)
@@ -103,6 +114,12 @@ namespace Caesura.Actors
         
         internal void EnqueueWait(Actor actor, TimeSpan time, Action continue_with)
         {
+            // TODO: have this send a special internal message type that will get
+            // sent back to the actor and run it's continue_with inside of the
+            // actor in a special internal Receive method.
+            // We'll send the message back to the actor after the timespan ends, which
+            // will be enqueued in a custom queue system.
+            
             throw new NotImplementedException();
         }
         
