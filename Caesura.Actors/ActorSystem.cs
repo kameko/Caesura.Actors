@@ -11,12 +11,14 @@ namespace Caesura.Actors
     public class ActorSystem
     {
         public string Name { get; private set; }
+        public ActorPath Location { get; private set; }
         private Dictionary<ActorPath, Actor> Actors { get; set; }
         
         internal ActorSystem(string name)
         {
-            Name = name;
-            Actors = new Dictionary<ActorPath, Actor>();
+            Name     = ActorPath.Sanitize(name);
+            Location = new ActorPath($"caesura://{Name}/");
+            Actors   = new Dictionary<ActorPath, Actor>();
         }
         
         public static ActorSystem Create(string name)
@@ -84,17 +86,10 @@ namespace Caesura.Actors
         
         public void DestroyActor(string path) => DestroyActor(new ActorPath(path));
         
-        public void Tell<T>(ActorPath path, T data, IActorReference sender)
+        internal void EnqueueForMessageProcessing<T>(ActorPath path, T data, IActorReference sender)
         {
             throw new NotImplementedException();
         }
-        
-        public void Tell<T>(ActorPath path, T data)
-        {
-            throw new NotImplementedException();
-        }
-        
-        public void Tell<T>(string path, T data) => Tell<T>(new ActorPath(path), data);
         
         internal void Unhandled(object message)
         {

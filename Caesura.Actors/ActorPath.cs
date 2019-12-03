@@ -10,6 +10,7 @@ namespace Caesura.Actors
     {
         public string Path { get; private set; }
         public string Name => GetName();
+        public string Location => GetLocation();
         
         public ActorPath(string path)
         {
@@ -18,13 +19,31 @@ namespace Caesura.Actors
         
         public ActorPath(string path, string name)
         {
+            path = path.TrimEnd('/');
+            name = Sanitize(name);
             Path = $"{path}/{name}";
+        }
+        
+        internal static string Sanitize(string path)
+        {
+            string sanitized = new string(path.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray());
+            return sanitized;
         }
         
         private string GetName()
         {
+            if (Path.EndsWith('/'))
+            {
+                return string.Empty;
+            }
             var paths = Path.Split('/');
             return paths.Last();
+        }
+        
+        private string GetLocation()
+        {
+            var path = Path.Substring(0, Path.Length - Name.Length);
+            return path;
         }
         
         public static bool operator == (ActorPath x, ActorPath y)

@@ -8,12 +8,11 @@ namespace Caesura.Actors
     public interface IActorReference : ITellable
     {
         ActorPath Path { get; }
-        void Tell<T>(T data);
         void Tell<T>(T data, IActorReference sender);
-        Task Ask<T>(T data);
-        Task Ask<T>(T data, TimeSpan timeout);
-        Task<R> Ask<T, R>(T data);
-        Task<R> Ask<T, R>(T data, TimeSpan timeout);
+        void Ask<T>(T data, IActorReference sender, Action continueWith);
+        void Ask<T>(T data, IActorReference sender, Action continueWith, TimeSpan timeout);
+        R Ask<T, R>(T data, IActorReference sender, Action<R> continueWith);
+        R Ask<T, R>(T data, IActorReference sender, Action<R> continueWith, TimeSpan timeout);
         void InformUnhandledError(Exception e);
     }
 }

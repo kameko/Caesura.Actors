@@ -7,24 +7,30 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
+    // TODO: stall/wait method that doesn't use async but still
+    // allows the system to process other messages while it keeps
+    // the actor in a non-blocking stasis.
+    
     public abstract class Actor : ITellable
     {
         public ActorPath Path { get; private set; }
         private ActorSystem System { get; set; }
+        protected IActorReference Sender { get; private set; }
         protected IActorReference Self { get; private set; }
         protected IActorReference Parent => InternalParent;
         protected IReadOnlyList<IActorReference> Children => InternalChildren;
-        protected Stash Stash { get; private set; }
+        protected MessageStash Stash { get; private set; }
         private List<ActorCell> Cells { get; set; }
         private Action<object>? OnAny { get; set; }
         private object? CurrentMessage { get; set; }
         internal IActorReference InternalParent { get; set; }
         internal List<IActorReference> InternalChildren { get; set; }
         
-        internal Actor()
+        public Actor()
         {
             Path             = null!;
             System           = null!;
+            Sender           = null!;
             Self             = null!;
             InternalParent   = null!;
             InternalChildren = null!;
@@ -35,11 +41,11 @@ namespace Caesura.Actors
         internal void Populate(ActorSystem system, IActorReference parent, ActorPath path)
         {
             Path             = path;
-            Self             = new LocalActorReference(system, path);
             System           = system;
+            Self             = new LocalActorReference(system, path);
             InternalParent   = parent;
             InternalChildren = new List<IActorReference>();
-            Stash            = new Stash(this);
+            Stash            = new MessageStash(this);
             Cells            = new List<ActorCell>();
         }
         
@@ -56,6 +62,36 @@ namespace Caesura.Actors
         public virtual void OnDestruction()
         {
             
+        }
+        
+        protected void Tell<T>(IActorReference actor, T data)
+        {
+            actor.Tell(data, Self);
+        }
+        
+        protected void Ask<T>(IActorReference actor, T data, Action continueWith)
+        {
+            actor.Ask(data, Self, continueWith);
+        }
+        
+        protected void Ask<T>(IActorReference actor, T data, Action continueWith, TimeSpan timeout)
+        {
+            actor.Ask(data, Self, continueWith, timeout);
+        }
+        
+        protected R Ask<T, R>(IActorReference actor, T data, Action<R> continueWith)
+        {
+            return actor.Ask(actor, Self, continueWith);
+        }
+        
+        protected R Ask<T, R>(IActorReference actor, T data, Action<R> continueWith, TimeSpan timeout)
+        {
+            return actor.Ask(data, Self, continueWith, timeout);
+        }
+        
+        protected void Forward<T>(IActorReference actor, T data)
+        {
+            actor.Tell(data, Sender);
         }
         
         protected IActorReference NewChild(ActorSchematic schematic, string name)
@@ -88,8 +124,9 @@ namespace Caesura.Actors
             OnAny = handler;
         }
         
-        internal void ProcessMessage<T>(T message)
+        internal void ProcessMessage<T>(IActorReference sender, T message)
         {
+            Sender = sender;
             CurrentMessage = (object)message!;
             
             var handled = false;

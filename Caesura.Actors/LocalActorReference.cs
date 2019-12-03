@@ -23,32 +23,27 @@ namespace Caesura.Actors
             Path   = path;
         }
         
-        public void Tell<T>(T data)
-        {
-            System.Tell<T>(Path, data);
-        }
-        
         public void Tell<T>(T data, IActorReference sender)
         {
-            System.Tell<T>(Path, data, sender);
+            System.EnqueueForMessageProcessing<T>(Path, data, sender);
         }
         
-        public Task Ask<T>(T data)
+        public void Ask<T>(T data, IActorReference sender, Action continueWith)
         {
             throw new NotImplementedException();
         }
         
-        public Task Ask<T>(T data, TimeSpan timeout)
+        public void Ask<T>(T data, IActorReference sender, Action continueWith, TimeSpan timeout)
         {
             throw new NotImplementedException();
         }
         
-        public Task<R> Ask<T, R>(T data)
+        public R Ask<T, R>(T data, IActorReference sender, Action<R> continueWith)
         {
             throw new NotImplementedException();
         }
         
-        public Task<R> Ask<T, R>(T data, TimeSpan timeout)
+        public R Ask<T, R>(T data, IActorReference sender, Action<R> continueWith, TimeSpan timeout)
         {
             throw new NotImplementedException();
         }

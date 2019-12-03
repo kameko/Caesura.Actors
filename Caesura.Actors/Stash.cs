@@ -6,16 +6,16 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    public class Stash
+    public class MessageStash
     {
         private Actor Owner { get; set; }
         
-        public Stash(Actor owner)
+        public MessageStash(Actor owner)
         {
             Owner = owner;
         }
         
-        public void StashMessage()
+        public void Stash()
         {
             throw new NotImplementedException();
         }
