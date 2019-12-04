@@ -17,9 +17,9 @@ namespace Caesura.Actors
         protected IActorReference Parent => InternalParent;
         protected IReadOnlyList<IActorReference> Children => InternalChildren;
         protected MessageStash Stash { get; private set; }
-        private List<ActorCell> Cells { get; set; }
-        private Action<object>? OnAny { get; set; }
-        private object? CurrentMessage { get; set; }
+        internal List<ActorCell> Cells { get; set; }
+        internal Action<object>? OnAny { get; set; }
+        internal object? CurrentMessage { get; set; }
         internal IActorReference InternalParent { get; set; }
         internal List<IActorReference> InternalChildren { get; set; }
         
@@ -180,8 +180,7 @@ namespace Caesura.Actors
         
         protected void Become(Action method)
         {
-            Cells.Clear();
-            OnAny = null;
+            DestroyCellStack();
             method.Invoke();
         }
         
@@ -221,7 +220,10 @@ namespace Caesura.Actors
             
             var handled = false;
             var errored = false;
-            var cells = Cells.Where(x => x is ActorCell<T>) as IEnumerable<ActorCell<T>>;
+            
+            // TODO: make this method not generic, instead pass an object to ActorCell (non-generic)
+            // and see if the object is an instance of the type
+            var cells = Cells.Where(x => x.HandlerType.IsInstanceOfType(typeof(T))) as IEnumerable<ActorCell<T>>;
             foreach (var cell in cells!)
             {
                 try
@@ -336,6 +338,12 @@ namespace Caesura.Actors
         internal void InformParentOfUnhandledError(Exception e)
         {
             InternalParent.InformUnhandledError(Self, e);
+        }
+        
+        internal void DestroyCellStack()
+        {
+            Cells.Clear();
+            OnAny = null;
         }
     }
 }

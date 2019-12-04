@@ -22,7 +22,5 @@ namespace Caesura.Actors
             Data     = data;
             Sender   = sender;
         }
-        
-        // TODO: run the actor on a thread.
     }
 }

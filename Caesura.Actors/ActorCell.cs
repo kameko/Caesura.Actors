@@ -9,10 +9,12 @@ namespace Caesura.Actors
     internal class ActorCell
     {
         public Actor Owner { get; set; }
+        public Type HandlerType { get; set; }
         
-        public ActorCell(Actor owner)
+        public ActorCell(Actor owner, Type type)
         {
-            Owner = owner;
+            Owner       = owner;
+            HandlerType = type;
         }
     }
     
@@ -21,12 +23,12 @@ namespace Caesura.Actors
         private Predicate<T>? CanHandle { get; set; }
         private Action<T> Handler { get; set; }
         
-        public ActorCell(Actor owner, Action<T> handler) : base(owner)
+        public ActorCell(Actor owner, Action<T> handler) : base(owner, typeof(T))
         {
             Handler = handler;
         }
         
-        public ActorCell(Actor owner, Predicate<T> can_handle, Action<T> handler) : base(owner)
+        public ActorCell(Actor owner, Predicate<T> can_handle, Action<T> handler) : base(owner, typeof(T))
         {
             CanHandle = can_handle;
             Handler = handler;
@@ -52,12 +54,12 @@ namespace Caesura.Actors
         private Predicate<T>? CanHandle { get; set; }
         private Func<T, Task> Handler { get; set; }
         
-        public AsyncActorCell(Actor owner, Func<T, Task> handler) : base(owner)
+        public AsyncActorCell(Actor owner, Func<T, Task> handler) : base(owner, typeof(T))
         {
             Handler = handler;
         }
         
-        public AsyncActorCell(Actor owner, Predicate<T> can_handle, Func<T, Task> handler) : base(owner)
+        public AsyncActorCell(Actor owner, Predicate<T> can_handle, Func<T, Task> handler) : base(owner, typeof(T))
         {
             CanHandle = can_handle;
             Handler = handler;

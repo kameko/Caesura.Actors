@@ -16,8 +16,9 @@ namespace Caesura.Actors
     {
         public string Name { get; private set; }
         public ActorPath Location { get; private set; }
-        private Dictionary<ActorPath, Actor> Actors { get; set; }
+        private Dictionary<ActorPath, ActorContainer> Actors { get; set; }
         private List<ActorQueueToken> ActorQueue { get; set; }
+        private Scheduler Scheduler { get; set; }
         
         private RootSupervisor Root { get; set; }
         private LostLetters Lost { get; set; }
@@ -26,16 +27,19 @@ namespace Caesura.Actors
         {
             Name       = ActorPath.Sanitize(name);
             Location   = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
-            Actors     = new Dictionary<ActorPath, Actor>();
+            Actors     = new Dictionary<ActorPath, ActorContainer>();
             ActorQueue = new List<ActorQueueToken>();
+            Scheduler  = new Scheduler(this);
             
             Root = new RootSupervisor(this);
             Root.Populate(this, ActorReferences.Nobody, Location);
-            Actors.Add(Location, Root);
+            var rootcontainer = new ActorContainer(Root);
+            Actors.Add(Location, rootcontainer);
             
             Lost = new LostLetters(this);
             Lost.Populate(this, new LocalActorReference(this, Root.Path), new ActorPath(Location.Path, "lost-letters"));
-            Actors.Add(Lost.Path, Lost);
+            var lostcontainer = new ActorContainer(Lost);
+            Actors.Add(Lost.Path, lostcontainer);
         }
         
         public static ActorSystem Create(string name)
@@ -73,38 +77,35 @@ namespace Caesura.Actors
         {
             if (Actors.ContainsKey(path))
             {
-                OnDestroyActor(path);
-                
                 var actor = Actors[path];
                 
-                if (Actors.ContainsKey(actor.InternalParent.Path))
+                actor.Status = ActorStatus.Destroying;
+                
+                actor.Actor.CallOnDestruction();
+                
+                actor.Actor.DestroyCellStack();
+                
+                if (Actors.ContainsKey(actor.Actor.InternalParent.Path))
                 {
                     // remove self from parent
-                    var parent = Actors[actor.InternalParent.Path];
-                    var child_to_remove = parent.InternalChildren.Find(x => x.Path == path);
+                    var parent = Actors[actor.Actor.InternalParent.Path];
+                    var child_to_remove = parent.Actor.InternalChildren.Find(x => x.Path == path);
                     if (child_to_remove is { })
                     {
-                        parent.InternalChildren.Remove(child_to_remove);
+                        parent.Actor.InternalChildren.Remove(child_to_remove);
                     }
                 }
                 
                 // recursively destroy children
-                foreach (var child in actor.InternalChildren)
+                foreach (var child in actor.Actor.InternalChildren)
                 {
                     var cpath = child.Path;
                     DestroyActor(path);
                 }
                 
+                actor.Status = ActorStatus.Destroyed;
+                
                 Actors.Remove(path);
-            }
-        }
-        
-        private void OnDestroyActor(ActorPath path)
-        {
-            if (Actors.ContainsKey(path))
-            {
-                var actor = Actors[path];
-                actor.CallOnDestruction();
             }
         }
         
@@ -113,6 +114,15 @@ namespace Caesura.Actors
         public void Shutdown()
         {
             throw new NotImplementedException();
+        }
+        
+        internal ActorContainer? GetActor(ActorPath path)
+        {
+            if (Actors.ContainsKey(path))
+            {
+                return Actors[path];
+            }
+            return null;
         }
         
         internal void EnqueueWait(Actor actor, TimeSpan time, Action<ActorContinuation> continue_with)
@@ -174,7 +184,8 @@ namespace Caesura.Actors
             // TODO: save schematic for revival
             
             actor.Populate(this, self, path);
-            Actors.Add(actor.Path, actor);
+            var container = new ActorContainer(actor);
+            Actors.Add(actor.Path, container);
             return new LocalActorReference(this, actor.Path);
         }
         
@@ -188,6 +199,26 @@ namespace Caesura.Actors
         {
             // TODO: tell the scheduler we're ready for a new message.
             throw new NotImplementedException();
+        }
+    }
+    
+    internal enum ActorStatus
+    {
+        Ready,
+        Enqueued,
+        Destroying,
+        Destroyed,
+    }
+    
+    internal class ActorContainer
+    {
+        public Actor Actor { get; set; }
+        public ActorStatus Status { get; set; }
+        
+        public ActorContainer(Actor actor)
+        {
+            Status = ActorStatus.Ready;
+            Actor = actor;
         }
     }
 }
