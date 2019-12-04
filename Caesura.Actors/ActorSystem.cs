@@ -19,6 +19,7 @@ namespace Caesura.Actors
         private Dictionary<ActorPath, ActorContainer> Actors { get; set; }
         private List<ActorQueueToken> ActorQueue { get; set; }
         private Scheduler Scheduler { get; set; }
+        private ActorLogger Log { get; set; }
         
         private RootSupervisor Root { get; set; }
         private LostLetters Lost { get; set; }
@@ -35,6 +36,8 @@ namespace Caesura.Actors
             Root.Populate(this, ActorReferences.Nobody, Location);
             var rootcontainer = new ActorContainer(Root);
             Actors.Add(Location, rootcontainer);
+            
+            Log = new ActorLogger(Root);
             
             Lost = new LostLetters(this);
             Lost.Populate(this, new LocalActorReference(this, Root.Path), new ActorPath(Location.Path, "lost-letters"));

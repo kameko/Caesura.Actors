@@ -221,6 +221,8 @@ namespace Caesura.Actors
             var handled = false;
             var errored = false;
             
+            // TODO: check for the Fault type, if not found and it's a Fault message, escelate it.
+            
             // TODO: make this method not generic, instead pass an object to ActorCell (non-generic)
             // and see if the object is an instance of the type
             var cells = Cells.Where(x => x.HandlerType.IsInstanceOfType(typeof(T))) as IEnumerable<ActorCell<T>>;

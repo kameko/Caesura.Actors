@@ -365,7 +365,7 @@ namespace Caesura.Actors
         
         // --- DEBUG --- //
         
-        [Conditional("DEBUG")]
+        [Conditional("DEBUG"), Conditional("VERBOSE")]
         public void Debug(
             string message, 
             [CallerFilePath] string source_file = "",
@@ -375,7 +375,7 @@ namespace Caesura.Actors
             Construct(ActorLogLevel.Debug, source_file, source_line, null, message, null);
         }
         
-        [Conditional("DEBUG")]
+        [Conditional("DEBUG"), Conditional("VERBOSE")]
         public void Debug(
             Exception exception,
             string message,
@@ -386,7 +386,7 @@ namespace Caesura.Actors
             Construct(ActorLogLevel.Debug, source_file, source_line, exception, message, null);
         }
         
-        [Conditional("DEBUG")]
+        [Conditional("DEBUG"), Conditional("VERBOSE")]
         public void Debug(
             string message,
             IEnumerable<object> items,
@@ -397,7 +397,7 @@ namespace Caesura.Actors
             Construct(ActorLogLevel.Debug, source_file, source_line, null, message, items);
         }
         
-        [Conditional("DEBUG")]
+        [Conditional("DEBUG"), Conditional("VERBOSE")]
         public void Debug(
             Exception exception,
             string message,
@@ -411,7 +411,7 @@ namespace Caesura.Actors
         
         // --- VERBOSE --- //
         
-        [Conditional("DEBUG")]
+        [Conditional("VERBOSE")]
         public void Verbose(
             string message, 
             [CallerFilePath] string source_file = "",
@@ -421,7 +421,7 @@ namespace Caesura.Actors
             Construct(ActorLogLevel.Verbose, source_file, source_line, null, message, null);
         }
         
-        [Conditional("DEBUG")]
+        [Conditional("VERBOSE")]
         public void Verbose(
             Exception exception,
             string message,
@@ -432,7 +432,7 @@ namespace Caesura.Actors
             Construct(ActorLogLevel.Verbose, source_file, source_line, exception, message, null);
         }
         
-        [Conditional("DEBUG")]
+        [Conditional("VERBOSE")]
         public void Verbose(
             string message,
             IEnumerable<object> items,
@@ -443,7 +443,7 @@ namespace Caesura.Actors
             Construct(ActorLogLevel.Verbose, source_file, source_line, null, message, items);
         }
         
-        [Conditional("DEBUG")]
+        [Conditional("VERBOSE")]
         public void Verbose(
             Exception exception,
             string message,
