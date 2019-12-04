@@ -141,11 +141,15 @@ namespace Caesura.Actors
                 default_logger_enabled = value;
             }
         }
+        public static bool DEBUG { set; get; }
+        public static bool VERBOSE { set; get; }
         
         static ActorLogger()
         {
-            OnLog = delegate { };
+            OnLog                = delegate { };
             DefaultLoggerEnabled = false;
+            DEBUG                = false;
+            VERBOSE              = false;
         }
         
         public ActorLogger(Actor owner)
@@ -365,17 +369,16 @@ namespace Caesura.Actors
         
         // --- DEBUG --- //
         
-        [Conditional("DEBUG"), Conditional("VERBOSE")]
         public void Debug(
             string message, 
             [CallerFilePath] string source_file = "",
             [CallerLineNumber] int source_line = 0
         )
         {
+            if (!DEBUG && !VERBOSE) return;
             Construct(ActorLogLevel.Debug, source_file, source_line, null, message, null);
         }
         
-        [Conditional("DEBUG"), Conditional("VERBOSE")]
         public void Debug(
             Exception exception,
             string message,
@@ -383,10 +386,10 @@ namespace Caesura.Actors
             [CallerLineNumber] int source_line = 0
         )
         {
+            if (!DEBUG && !VERBOSE) return;
             Construct(ActorLogLevel.Debug, source_file, source_line, exception, message, null);
         }
         
-        [Conditional("DEBUG"), Conditional("VERBOSE")]
         public void Debug(
             string message,
             IEnumerable<object> items,
@@ -394,10 +397,10 @@ namespace Caesura.Actors
             [CallerLineNumber] int source_line = 0
         )
         {
+            if (!DEBUG && !VERBOSE) return;
             Construct(ActorLogLevel.Debug, source_file, source_line, null, message, items);
         }
         
-        [Conditional("DEBUG"), Conditional("VERBOSE")]
         public void Debug(
             Exception exception,
             string message,
@@ -406,22 +409,22 @@ namespace Caesura.Actors
             [CallerLineNumber] int source_line = 0
         )
         {
+            if (!DEBUG && !VERBOSE) return;
             Construct(ActorLogLevel.Debug, source_file, source_line, exception, message, items);
         }
         
         // --- VERBOSE --- //
         
-        [Conditional("VERBOSE")]
         public void Verbose(
             string message, 
             [CallerFilePath] string source_file = "",
             [CallerLineNumber] int source_line = 0
         )
         {
+            if (!VERBOSE) return;
             Construct(ActorLogLevel.Verbose, source_file, source_line, null, message, null);
         }
         
-        [Conditional("VERBOSE")]
         public void Verbose(
             Exception exception,
             string message,
@@ -429,10 +432,10 @@ namespace Caesura.Actors
             [CallerLineNumber] int source_line = 0
         )
         {
+            if (!VERBOSE) return;
             Construct(ActorLogLevel.Verbose, source_file, source_line, exception, message, null);
         }
         
-        [Conditional("VERBOSE")]
         public void Verbose(
             string message,
             IEnumerable<object> items,
@@ -440,10 +443,10 @@ namespace Caesura.Actors
             [CallerLineNumber] int source_line = 0
         )
         {
+            if (!VERBOSE) return;
             Construct(ActorLogLevel.Verbose, source_file, source_line, null, message, items);
         }
         
-        [Conditional("VERBOSE")]
         public void Verbose(
             Exception exception,
             string message,
@@ -452,6 +455,7 @@ namespace Caesura.Actors
             [CallerLineNumber] int source_line = 0
         )
         {
+            if (!VERBOSE) return;
             Construct(ActorLogLevel.Verbose, source_file, source_line, exception, message, items);
         }
     }
