@@ -23,26 +23,24 @@ namespace Caesura.Actors
         
         private void Behavior()
         {
-            Receive<LostLetter>(
-                letter =>
-                {
-                    ActorLog.Info(
-                        $"Message from \"{letter.Sender.Path.Path}\" containing " +
-                        $"{letter.Data.GetType().Name} did not reach target " +
-                        $"at \"{letter.Receiver.Path.Path}\". " +
-                        "Data: ", new object[] { letter.Data }
-                    );
-                }
-            );
+            var on_lost = Handler<LostLetter>.Create(this);
+            on_lost += letter =>
+            {
+                ActorLog.Info(
+                    $"Message from \"{letter.Sender.Path.Path}\" containing " +
+                    $"{letter.Data.GetType().Name} did not reach target " +
+                    $"at \"{letter.Receiver.Path.Path}\". " +
+                    "Data: ", new object[] { letter.Data }
+                );
+            };
             
-            ReceiveAny(
-                msg =>
-                {
-                    ActorLog.Warning(
-                        $"{nameof(LostLetters)} got a message that was not of {nameof(LostLetter)}!"
-                    );
-                }
-            );
+            var on_any = HandleAny.Create(this);
+            on_any += msg =>
+            {
+                ActorLog.Warning(
+                    $"{nameof(LostLetters)} got a message that was not of {nameof(LostLetter)}!"
+                );
+            };
         }
     }
     

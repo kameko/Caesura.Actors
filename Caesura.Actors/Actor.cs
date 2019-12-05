@@ -17,7 +17,7 @@ namespace Caesura.Actors
         protected IActorReference Parent => InternalParent;
         protected IReadOnlyList<IActorReference> Children => InternalChildren;
         protected MessageStash Stash { get; private set; }
-        internal List<ActorCell> Cells { get; set; }
+        internal HandlerService Handlers { get; set; }
         internal Action<object>? OnAny { get; set; }
         internal object? CurrentMessage { get; set; }
         internal IActorReference InternalParent { get; set; }
@@ -33,7 +33,7 @@ namespace Caesura.Actors
             InternalParent   = null!;
             InternalChildren = null!;
             Stash            = null!;
-            Cells            = null!;
+            Handlers         = null!;
         }
         
         internal void Populate(ActorSystem system, IActorReference parent, ActorPath path)
@@ -45,7 +45,7 @@ namespace Caesura.Actors
             InternalParent   = parent;
             InternalChildren = new List<IActorReference>();
             Stash            = new MessageStash(this);
-            Cells            = new List<ActorCell>();
+            Handlers         = new HandlerService(this);
         }
         
         protected virtual void PreReload()
@@ -180,143 +180,16 @@ namespace Caesura.Actors
         
         protected void Become(Action method)
         {
-            DestroyCellStack();
+            DestroyHandlerStack();
             method.Invoke();
         }
         
-        // TODO: replace Receive with some += operator on some method
-        
-        protected void Receive<T>(Predicate<T> can_handle, Action<T> handler)
-        {
-            var cell = new ActorCell<T>(this, can_handle, handler);
-            Cells.Add(cell);
-        }
-        
-        protected void Receive<T>(Action<T> handler)
-        {
-            var cell = new ActorCell<T>(this, handler);
-            Cells.Add(cell);
-        }
-        
-        // TODO: explore removing ReceiveAsync, have all Handlers simply return a Task,
-        // or rather some custom class that acts like a Task.
-        
-        protected void ReceiveAsync<T>(Predicate<T> can_handle, Func<T, Task> handler)
-        {
-            var cell = new AsyncActorCell<T>(this, can_handle, handler);
-            Cells.Add(cell);
-        }
-        
-        protected void ReceiveAsync<T>(Func<T, Task> handler)
-        {
-            var cell = new AsyncActorCell<T>(this, handler);
-            Cells.Add(cell);
-        }
-        
-        protected void ReceiveAny(Action<object> handler)
-        {
-            OnAny = handler;
-        }
-        
-        internal ActorProcessingResult ProcessMessage<T>(IActorReference sender, T message)
+        internal ActorProcessingResult ProcessMessage(IActorReference sender, object message)
         {
             Sender = sender;
-            CurrentMessage = (object)message!;
+            CurrentMessage = message;
             
-            var handled = false;
-            var errored = false;
-            
-            // TODO: check for the Fault type, if not found and it's a Fault message, escelate it.
-            
-            // TODO: make this method not generic, instead pass an object to ActorCell (non-generic)
-            // and see if the object is an instance of the type
-            var cells = Cells.Where(x => x.HandlerType.IsInstanceOfType(typeof(T))) as IEnumerable<ActorCell<T>>;
-            foreach (var cell in cells!)
-            {
-                try
-                {
-                    if (cell.ShouldHandle(message))
-                    {
-                        handled = true;
-                        cell.Handle(message);
-                        break;
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
-                catch (Exception e)
-                {
-                    errored = true;
-                    InformParentOfUnhandledError(e);
-                    break;
-                }
-            }
-            
-            if (!handled && !errored)
-            {
-                var async_cells = Cells.Where(x => x is ActorCell<T>) as IEnumerable<AsyncActorCell<T>>;
-                foreach (var cell in async_cells!)
-                {
-                    try
-                    {
-                        // TODO: make sure this works
-                        // TODO: handle exceptions
-                        
-                        if (cell.ShouldHandle(message))
-                        {
-                            handled = true;
-                            BeginSessionPersistence();
-                            cell.Handle(message).ContinueWith(task =>
-                            {
-                                EndSessionPersistence();
-                            })
-                            .ConfigureAwait(false);
-                            break;
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        errored = true;
-                        InformParentOfUnhandledError(e);
-                        break;
-                    }
-                }
-            }
-            
-            // If no Cell handled the message without erroring, try handling it here.
-            if ((!handled) && (!errored) && !(OnAny is null))
-            {
-                handled = true;
-                try
-                {
-                    OnAny.Invoke((object)message!);
-                }
-                catch (Exception e)
-                {
-                    errored = true;
-                    InformParentOfUnhandledError(e);
-                }
-            }
-            
-            if (errored)
-            {
-                return ActorProcessingResult.Errored;
-            }
-            else if (!handled)
-            {
-                Unhandled();
-                return ActorProcessingResult.Unhandled;
-            }
-            else
-            {
-                return ActorProcessingResult.Success;
-            }
+            return Handlers.Handle(message);
         }
         
         protected void Unhandled()
@@ -347,10 +220,9 @@ namespace Caesura.Actors
             InternalParent.InformUnhandledError(Self, e);
         }
         
-        internal void DestroyCellStack()
+        internal void DestroyHandlerStack()
         {
-            Cells.Clear();
-            OnAny = null;
+            Handlers.Clear();
         }
     }
 }

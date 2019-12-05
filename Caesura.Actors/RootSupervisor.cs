@@ -23,24 +23,22 @@ namespace Caesura.Actors
         
         private void Behavior()
         {
-            Receive<Fault>(
-                fault =>
-                {
-                    ActorLog.Fatal(
-                        fault.Exception,
-                        $"System supervisor encountered an unhandled exception." +
-                        $"Actor system will now be shut down."
-                    );
-                    System.Shutdown();
-                }
-            );
+            var on_fault = Handler<Fault>.Create(this);
+            on_fault += fault =>
+            {
+                ActorLog.Fatal(
+                    fault.Exception,
+                    $"System supervisor encountered an unhandled exception." +
+                    $"Actor system will now be shut down."
+                );
+                System.Shutdown();
+            };
             
-            ReceiveAny(
-                msg =>
-                {
-                    
-                }
-            );
+            var on_any = HandleAny.Create(this);
+            on_any += msg =>
+            {
+                
+            };
         }
     }
 }

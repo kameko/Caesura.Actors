@@ -94,7 +94,7 @@ namespace Caesura.Actors
                 
                 actor.Actor.CallOnDestruction();
                 
-                actor.Actor.DestroyCellStack();
+                actor.Actor.DestroyHandlerStack();
                 
                 if (Actors.ContainsKey(actor.Actor.InternalParent.Path))
                 {
