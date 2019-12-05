@@ -3,9 +3,9 @@
 
 A simple actor system inspired by Akka.NET, designed to be simpler, easier to use, more predictable, less overly-engineered, and designed with plugins (AssemblyLoadContext) in mind.
 
-NOT YET FUNCTIONAL (almost there!)  
+Core functionality now in place!
+
 Critical things left to do:
- - Actor scheduler
  - TCP networking and networking layer
  - Tests
  - NuGet package
