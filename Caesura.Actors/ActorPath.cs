@@ -13,6 +13,13 @@ namespace Caesura.Actors
         public string Path { get; private set; }
         public string Name => GetName();
         public string Location => GetLocation();
+        public string Protocol => GetProtocol();
+        public string ProtocolExtension => GetProtocolExtension();
+        
+        private string? NameCache;
+        private string? LocationCache;
+        private string? ProtocolCache;
+        private string? ProtocolExtensionCache;
         
         public ActorPath(string path)
         {
@@ -34,6 +41,11 @@ namespace Caesura.Actors
         
         private string GetName()
         {
+            if (!string.IsNullOrEmpty(NameCache))
+            {
+                return NameCache;
+            }
+            
             if (Path.EndsWith('/') && Path.Count(c => c == '/') == 3)
             {
                 // this is the root actor (path is "caesura://something/")
@@ -44,13 +56,56 @@ namespace Caesura.Actors
                 return string.Empty;
             }
             var paths = Path.Split('/');
-            return paths.Last();
+            var path = paths.Last();
+            NameCache = path;
+            return path;
         }
         
         private string GetLocation()
         {
+            if (!string.IsNullOrEmpty(LocationCache))
+            {
+                return LocationCache;
+            }
+            
             var path = Path.Substring(0, Path.Length - Name.Length);
+            LocationCache = path;
             return path;
+        }
+        
+        private string GetProtocol()
+        {
+            if (!string.IsNullOrEmpty(ProtocolCache))
+            {
+                return ProtocolCache;
+            }
+            
+            var protocols = Path.Split("://");
+            var protocol = protocols[0];
+            ProtocolCache = protocol;
+            return protocol;
+        }
+        
+        private string GetProtocolExtension()
+        {
+            if (!string.IsNullOrEmpty(ProtocolExtensionCache))
+            {
+                return ProtocolExtensionCache;
+            }
+            
+            var protocol = GetProtocol();
+            if (!protocol.Contains('.'))
+            {
+                return string.Empty;
+            }
+            
+            var extension = protocol.Substring(ProtocolName.Length);
+            if (extension.StartsWith('.'))
+            {
+                extension = extension.TrimStart('.');
+            }
+            ProtocolExtensionCache = extension;
+            return extension;
         }
         
         public static bool operator == (ActorPath x, ActorPath y)
