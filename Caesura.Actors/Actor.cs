@@ -186,6 +186,16 @@ namespace Caesura.Actors
         
         internal void ProcessMessage(IActorReference sender, object message, CancellationToken cancel_token)
         {
+            if (HasFaulted)
+            {
+                ActorLog.Warning("Actor cannot process any more messages, it has faulted");
+                
+                Handlers.CurrentMessage = message;
+                Unhandled();
+                
+                return;
+            }
+            
             Sender = sender;
             var result = Handlers.Handle(message);
             if (result == ActorProcessingResult.Unhandled)
@@ -224,6 +234,7 @@ namespace Caesura.Actors
         
         internal void InformParentOfError(Exception e)
         {
+            HasFaulted = true;
             InternalParent.InformError(Self, e);
         }
         
