@@ -189,14 +189,12 @@ namespace Caesura.Actors
         
         internal void BeginSessionPersistence(Actor actor)
         {
-            // TODO: tell the scheduler we're not done processing.
-            throw new NotImplementedException();
+            Scheduler.BeginSessionPersistence(actor);
         }
         
         internal void EndSessionPersistence(Actor actor)
         {
-            // TODO: tell the scheduler we're ready for a new message.
-            throw new NotImplementedException();
+            Scheduler.EndSessionPersistence(actor);
         }
     }
     

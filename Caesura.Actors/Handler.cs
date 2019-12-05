@@ -24,14 +24,20 @@ namespace Caesura.Actors
             return false;
         }
         
-        protected void ProcessAsyncHandler<T>(Func<T, Task> handler, T data)
+        protected void ProcessAsyncHandler<T>(Func<T, Task>? handler, T data)
         {
+            if (handler is null)
+            {
+                return;
+            }
+            
             if (ForceSync)
             {
                 try
                 {
                     // Don't get mad at me. I just like options,
                     // no matter how stupid they are.
+                    // Nobody in their right mind would use this anyway.
                     var task = handler.Invoke(data);
                     task.GetAwaiter().GetResult();
                 }
@@ -39,19 +45,20 @@ namespace Caesura.Actors
                 {
                     Owner.InternalLog.Error(e, $"Handler threw an exception");
                 }
-                return;
             }
-            
-            Owner.BeginSessionPersistence();
-            try
+            else
             {
-                var task = handler.Invoke(data);
-                task.ContinueWith(_ => Owner.EndSessionPersistence());
-            }
-            catch (Exception e)
-            {
-                Owner.InternalLog.Error(e, $"Handler threw an exception");
-                Owner.EndSessionPersistence();
+                Owner.BeginSessionPersistence();
+                try
+                {
+                    var task = handler.Invoke(data);
+                    task.ContinueWith(_ => Owner.EndSessionPersistence());
+                }
+                catch (Exception e)
+                {
+                    Owner.InternalLog.Error(e, $"Handler threw an exception");
+                    Owner.EndSessionPersistence();
+                }
             }
         }
     }
@@ -98,10 +105,7 @@ namespace Caesura.Actors
             try
             {
                 HandlerCallback?.Invoke(raw_data);
-                if (!(HandlerCallbackAsync is null))
-                {
-                    ProcessAsyncHandler(HandlerCallbackAsync, raw_data);
-                }
+                ProcessAsyncHandler(HandlerCallbackAsync, raw_data);
             }
             catch (Exception e)
             {
@@ -204,10 +208,7 @@ namespace Caesura.Actors
         protected void Process(T data)
         {
             HandlerCallback?.Invoke(data);
-            if (!(HandlerCallbackAsync is null))
-            {
-                ProcessAsyncHandler(HandlerCallbackAsync, data);
-            }
+            ProcessAsyncHandler(HandlerCallbackAsync, data);
         }
     }
     
