@@ -6,23 +6,64 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    public class BaseHandler
+    public abstract class BaseHandler
     {
+        protected Actor Owner { get; set; }
+        public bool ForceSync { get; set; }
+        
+        internal BaseHandler(Actor owner)
+        {
+            Owner     = owner;
+            ForceSync = false;
+            
+            Owner.Handlers.Add(this);
+        }
+        
         internal virtual bool Handle(object raw_data)
         {
             return false;
+        }
+        
+        protected void ProcessAsyncHandler<T>(Func<T, Task> handler, T data)
+        {
+            if (ForceSync)
+            {
+                try
+                {
+                    // Don't get mad at me. I just like options,
+                    // no matter how stupid they are.
+                    var task = handler.Invoke(data);
+                    task.GetAwaiter().GetResult();
+                }
+                catch (Exception e)
+                {
+                    Owner.InternalLog.Error(e, $"Handler threw an exception");
+                }
+                return;
+            }
+            
+            Owner.BeginSessionPersistence();
+            try
+            {
+                var task = handler.Invoke(data);
+                task.ContinueWith(_ => Owner.EndSessionPersistence());
+            }
+            catch (Exception e)
+            {
+                Owner.InternalLog.Error(e, $"Handler threw an exception");
+                Owner.EndSessionPersistence();
+            }
         }
     }
     
     public class HandleAny : BaseHandler
     {
-        private Actor Owner { get; set; }
         private Action<object>? HandlerCallback { get; set; }
         private Func<object, Task>? HandlerCallbackAsync { get; set; }
         
-        internal HandleAny(Actor owner)
+        internal HandleAny(Actor owner) : base(owner)
         {
-            Owner = owner;
+            
         }
         
         public static HandleAny Create(Actor owner)
@@ -57,13 +98,15 @@ namespace Caesura.Actors
             try
             {
                 HandlerCallback?.Invoke(raw_data);
-                // TODO: handle async handler
+                if (!(HandlerCallbackAsync is null))
+                {
+                    ProcessAsyncHandler(HandlerCallbackAsync, raw_data);
+                }
             }
-            catch
+            catch (Exception e)
             {
-                // TODO: log error
+                Owner.InternalLog.Error(e, $"Handler threw an exception");
             }
-            
             // Always return true. If a HandleAny simply exists
             // at all then the message was handled.
             return true;
@@ -72,15 +115,13 @@ namespace Caesura.Actors
     
     public class Handler<T> : BaseHandler
     {
-        protected Actor Owner { get; set; }
         protected Predicate<T>? CanHandle { get; set; }
         protected Action<T>? HandlerCallback { get; set; }
         protected Func<T, Task>? HandlerCallbackAsync { get; set; }
         
-        internal Handler(Actor owner)
+        internal Handler(Actor owner) : base(owner)
         {
-            Owner = owner;
-            Owner.Handlers.Add(this);
+            
         }
         
         public static Handler<T> Create(Actor owner)
@@ -163,7 +204,10 @@ namespace Caesura.Actors
         protected void Process(T data)
         {
             HandlerCallback?.Invoke(data);
-            // TODO: handle async handler
+            if (!(HandlerCallbackAsync is null))
+            {
+                ProcessAsyncHandler(HandlerCallbackAsync, data);
+            }
         }
     }
     

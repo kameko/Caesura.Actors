@@ -217,12 +217,12 @@ namespace Caesura.Actors
             System.DestroyActor(Self);
         }
         
-        protected void BeginSessionPersistence()
+        internal void BeginSessionPersistence()
         {
             System.BeginSessionPersistence(this);
         }
         
-        protected void EndSessionPersistence()
+        internal void EndSessionPersistence()
         {
             System.EndSessionPersistence(this);
         }
