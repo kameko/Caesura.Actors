@@ -5,6 +5,7 @@ namespace Caesura.Actors
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     
     public abstract class Actor : ITellable
@@ -184,7 +185,7 @@ namespace Caesura.Actors
             method.Invoke();
         }
         
-        internal void ProcessMessage(IActorReference sender, object message)
+        internal void ProcessMessage(IActorReference sender, object message, CancellationToken cancel_token)
         {
             Sender = sender;
             var result = Handlers.Handle(message);
@@ -205,6 +206,11 @@ namespace Caesura.Actors
         protected void DestroySelf()
         {
             System.DestroyActor(Self);
+        }
+        
+        protected bool StrEq(string str1, string str2)
+        {
+            return string.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
         }
         
         internal void BeginSessionPersistence()

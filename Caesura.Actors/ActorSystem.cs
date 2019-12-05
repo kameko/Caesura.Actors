@@ -13,24 +13,29 @@ namespace Caesura.Actors
     // objects
     // TODO: config, including allowing a custom scheduler.
     
-    public class ActorSystem
+    public class ActorSystem : IDisposable
     {
+        internal static int SystemCount { get; set; }
+        
         public string Name { get; private set; }
         public ActorPath Location { get; private set; }
         private Dictionary<ActorPath, ActorContainer> Actors { get; set; }
-        private List<ActorQueueToken> ActorQueue { get; set; }
         private Scheduler Scheduler { get; set; }
-        private ActorLogger Log { get; set; }
+        internal ActorLogger Log { get; set; }
         
         private RootSupervisor Root { get; set; }
         private LostLetters Lost { get; set; }
+        
+        static ActorSystem()
+        {
+            SystemCount = 0;
+        }
         
         internal ActorSystem(string name)
         {
             Name       = ActorPath.Sanitize(name);
             Location   = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
             Actors     = new Dictionary<ActorPath, ActorContainer>();
-            ActorQueue = new List<ActorQueueToken>();
             Scheduler  = new Scheduler(this);
             
             Root = new RootSupervisor(this);
@@ -44,17 +49,14 @@ namespace Caesura.Actors
             Lost.Populate(this, new LocalActorReference(this, Root.Path), new ActorPath(Location.Path, "lost-letters"));
             var lostcontainer = new ActorContainer(Lost);
             Actors.Add(Lost.Path, lostcontainer);
+            
+            Scheduler.Start();
+            
+            SystemCount++;
         }
         
         public static ActorSystem Create(string name)
         {
-            // TODO: have a static ActorSystem instance counter, and have each
-            // scheduler use less threads the higher the counter is. So on a 4
-            // core machine, one instance would have a scheduler with 4 threads,
-            // then instancing a new one would cause the new system to instance with
-            // 2 threads, then the first instance would gracefully stop two of it's
-            // threads to evenly split the threads between the system. After there are
-            // more instances than threads, just have each instance run with one thread.
             return new ActorSystem(name);
         }
         
@@ -124,6 +126,7 @@ namespace Caesura.Actors
         
         public void Shutdown()
         {
+            Scheduler.Stop();
             throw new NotImplementedException();
         }
         
@@ -145,7 +148,7 @@ namespace Caesura.Actors
             else if (receiver.IsLocal && Actors.ContainsKey(receiver))
             {
                 var token = new ActorQueueToken(this, receiver, typeof(T), (object)data!, sender);
-                ActorQueue.Add(token);
+                Scheduler.Enqueue(token);
             }
             else
             {
@@ -217,6 +220,12 @@ namespace Caesura.Actors
         internal void EndSessionPersistence(Actor actor)
         {
             Scheduler.EndSessionPersistence(actor);
+        }
+        
+        public void Dispose()
+        {
+            Shutdown();
+            SystemCount--;
         }
     }
     

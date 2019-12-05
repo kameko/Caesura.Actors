@@ -47,16 +47,24 @@ namespace Caesura.Actors
             {
                 return NameCache;
             }
+            if (NameCache == "@NOT AN ACTOR")
+            {
+                return string.Empty;
+            }
             
             if (Path.EndsWith('/') && Path.Count(c => c == '/') == 3)
             {
                 // this is the root actor (path is "caesura://something/")
-                return "/";
+                var name = "/";
+                NameCache = name;
+                return name;
             }
             if (Path.EndsWith('/'))
             {
+                NameCache = "@NOT AN ACTOR";
                 return string.Empty;
             }
+            
             var paths = Path.Split('/');
             var path = paths.Last();
             NameCache = path;
