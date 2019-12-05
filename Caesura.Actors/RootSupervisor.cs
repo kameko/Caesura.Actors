@@ -35,6 +35,9 @@ namespace Caesura.Actors
                     $"System supervisor encountered an unhandled exception." +
                     $"Actor system will now be shut down."
                 );
+                
+                fault.Destroy();
+                
                 System.Shutdown();
             };
             

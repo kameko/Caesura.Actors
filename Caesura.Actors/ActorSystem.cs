@@ -184,7 +184,7 @@ namespace Caesura.Actors
         
         internal void InformUnhandledError(ActorPath receiver, IActorReference faulted_actor, Exception e)
         {
-            var msg = new Fault(this, faulted_actor, e);
+            var msg = new Fault(this, receiver, faulted_actor, e);
             EnqueueForMessageProcessing(receiver, msg, faulted_actor);
             
             DestroyActor(faulted_actor);
