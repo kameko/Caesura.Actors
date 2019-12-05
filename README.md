@@ -12,7 +12,7 @@ Critical things left to do:
 
 The system is largely similar to Akka.NET with several key differences:
  - There is no `Context` and `Tell`ing an actor always requires you to specify the sender. `Context` in Akka.NET is a static class and is tightly coupled with the time that the current actor is running, and will become invalid in callbacks or async contexts. We do away with that here. To alleviate the pain of having to explicitly define the sender actor every time, the base Actor class comes with it's own `Tell(actor, data)` method which sends it's own actor reference behind the scenes. Further, there is a `Respond(data)` method which responds to the sender of the current message, `Tattle(data)` which sends a message to the parent, and `TellChildren(data)` which sends the data to all children.
- - There are no `Receive` methods, instead you create a new `Handler` object which natively and transparently supports both synchronous asynchronous methods. The Handler object has a lot more options and configurability than Akka's Receive does.
+ - There are no `Receive` methods, instead you create a new `Handler` object which natively and transparently supports both synchronous and asynchronous methods through operator overloading. The Handler object has a lot more options and configurability than Akka's Receive does.
  - The actor logger and the message stash do not have to be manually added to an actor, they are part of the base Actor class.
  - There is only one base Actor class, which acts like Akka.NET's ReceiveActor.
  - The Tell method is generic and strongly-typed, there is no `Tell(object)` method.
