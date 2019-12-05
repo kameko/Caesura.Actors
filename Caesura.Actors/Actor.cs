@@ -184,6 +184,8 @@ namespace Caesura.Actors
             method.Invoke();
         }
         
+        // TODO: replace Receive with some += operator on some method
+        
         protected void Receive<T>(Predicate<T> can_handle, Action<T> handler)
         {
             var cell = new ActorCell<T>(this, can_handle, handler);
@@ -195,6 +197,9 @@ namespace Caesura.Actors
             var cell = new ActorCell<T>(this, handler);
             Cells.Add(cell);
         }
+        
+        // TODO: explore removing ReceiveAsync, have all Handlers simply return a Task,
+        // or rather some custom class that acts like a Task.
         
         protected void ReceiveAsync<T>(Predicate<T> can_handle, Func<T, Task> handler)
         {
