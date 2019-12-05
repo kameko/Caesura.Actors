@@ -19,7 +19,11 @@ namespace Caesura.Actors
         
         internal void Add(Handler handler)
         {
-            // TODO: throw on more than one HandleAny
+            if (Handlers.Exists(x => x is HandleAny))
+            {
+                throw new ArgumentException($"Handlers already contains a {nameof(HandleAny)}");
+            }
+            
             Handlers.Add(handler);
         }
         
@@ -41,15 +45,19 @@ namespace Caesura.Actors
                 var any_handler = Handlers.Find(x => x is HandleAny);
                 if (any_handler is HandleAny)
                 {
-                    if (any_handler.Handle(data))
-                    {
-                        handled = true;
-                    }
+                    handled = true;
+                    any_handler.Handle(data);
                 }
             }
             
-            // TODO: handle unprocessed messages
-            return ActorProcessingResult.Success;
+            if (handled)
+            {
+                return ActorProcessingResult.Success;
+            }
+            else
+            {
+                return ActorProcessingResult.Unhandled;
+            }
         }
         
         internal void Clear()

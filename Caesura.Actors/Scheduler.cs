@@ -78,8 +78,8 @@ namespace Caesura.Actors
                         
                         var actor = container.Actor;
                         
-                        // TODO: get the type to pass to ProcessMessage
-                        // var result = actor.ProcessMessage
+                        var result = actor.ProcessMessage(Token.Sender, Token.Data);
+                        // TODO: handle the result
                         
                         Token = null;
                     }

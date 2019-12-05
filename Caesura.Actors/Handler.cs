@@ -8,6 +8,8 @@ namespace Caesura.Actors
     
     public class Handler
     {
+        // TODO: replicate Handle<T> but with objects
+        
         internal virtual bool Handle(object raw_data)
         {
             return false;
@@ -37,8 +39,18 @@ namespace Caesura.Actors
         
         internal override bool Handle(object raw_data)
         {
-            // TODO:
-            return false;
+            try
+            {
+                HandlerCallback?.Invoke(raw_data);
+            }
+            catch
+            {
+                // TODO: log error
+            }
+            
+            // Always return true. If a HandleAny simply exists
+            // at all then the message was handled.
+            return true;
         }
     }
     
