@@ -44,6 +44,7 @@ namespace Caesura.Actors
                 catch (Exception e)
                 {
                     Owner.InternalLog.Error(e, $"Handler threw an exception");
+                    InformParentOfError(e);
                 }
             }
             else
@@ -52,14 +53,28 @@ namespace Caesura.Actors
                 try
                 {
                     var task = handler.Invoke(data);
-                    task.ContinueWith(_ => Owner.EndSessionPersistence());
+                    task.ContinueWith(t => 
+                    {
+                        if (t.IsFaulted)
+                        {
+                            InformParentOfError(t.Exception!);
+                        }
+                        
+                        Owner.EndSessionPersistence();
+                    });
                 }
                 catch (Exception e)
                 {
                     Owner.InternalLog.Error(e, $"Handler threw an exception");
+                    InformParentOfError(e);
                     Owner.EndSessionPersistence();
                 }
             }
+        }
+        
+        protected void InformParentOfError(Exception e)
+        {
+            Owner.InformParentOfError(e);
         }
     }
     
@@ -182,6 +197,7 @@ namespace Caesura.Actors
                         catch (Exception e)
                         {
                             Owner.InternalLog.Error(e, $"Handler threw an exception");
+                            InformParentOfError(e);
                             // Errored or not, the message was handled,
                             // so we don't want to pass it on to any other
                             // callbacks.
@@ -196,6 +212,7 @@ namespace Caesura.Actors
                 catch (Exception e)
                 {
                     Owner.InternalLog.Error(e, $"Handle checker threw an exception");
+                    InformParentOfError(e);
                     return false;
                 }
             }
@@ -271,6 +288,7 @@ namespace Caesura.Actors
                     catch (Exception e)
                     {
                         Owner.InternalLog.Error(e, $"Handler threw an exception");
+                        InformParentOfError(e);
                         return true;
                     }
                 }
@@ -282,6 +300,7 @@ namespace Caesura.Actors
             catch (Exception e)
             {
                 Owner.InternalLog.Error(e, $"Handle checker threw an exception");
+                InformParentOfError(e);
                 return false;
             }
         }

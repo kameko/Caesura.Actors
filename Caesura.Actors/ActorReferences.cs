@@ -55,7 +55,7 @@ namespace Caesura.Actors
                 return continue_with.Invoke(ActorContinuation.NoContinuation(), data);
             }
             
-            public void InformUnhandledError(IActorReference sender, Exception e)
+            public void InformError(IActorReference sender, Exception e)
             {
                 // Do nothing.
             }

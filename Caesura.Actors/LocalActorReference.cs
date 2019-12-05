@@ -51,7 +51,7 @@ namespace Caesura.Actors
             throw new NotImplementedException();
         }
         
-        public void InformUnhandledError(IActorReference sender, Exception e)
+        public void InformError(IActorReference sender, Exception e)
         {
             System.InformUnhandledError(Path, sender, e);
         }

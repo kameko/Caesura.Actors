@@ -81,33 +81,33 @@ namespace Caesura.Actors
         
         // return Success if it didn't error so we can call PostReload,
         // otherwise kill the actor.
-        internal ActorProcessingResult CallPreReload()
+        internal ActorResult CallPreReload()
         {
             try
             {
                 PreReload();
-                return ActorProcessingResult.Success;
+                return new ActorResult(ActorProcessingResult.Success);
             }
             catch (Exception e)
             {
                 ActorLog.Verbose(e, $"Error calling {nameof(PreReload)}");
-                return ActorProcessingResult.Errored;
+                return new ActorResult(ActorProcessingResult.Errored, e);
             }
         }
         
         // If this returns Errored, we destroy the actor. Otherwise
         // it would be an endless loop of erroring.
-        internal ActorProcessingResult CallPostReload()
+        internal ActorResult CallPostReload()
         {
             try
             {
                 PostReload();
-                return ActorProcessingResult.Success;
+                return new ActorResult(ActorProcessingResult.Success);
             }
             catch (Exception e)
             {
                 ActorLog.Verbose(e, $"Error calling {nameof(PostReload)}");
-                return ActorProcessingResult.Errored;
+                return new ActorResult(ActorProcessingResult.Errored, e);
             }
         }
         
@@ -185,7 +185,7 @@ namespace Caesura.Actors
             method.Invoke();
         }
         
-        internal ActorProcessingResult ProcessMessage(IActorReference sender, object message)
+        internal void ProcessMessage(IActorReference sender, object message)
         {
             Sender = sender;
             CurrentMessage = message;
@@ -195,8 +195,6 @@ namespace Caesura.Actors
             {
                 Unhandled();
             }
-            
-            return result;
         }
         
         protected void Unhandled()
@@ -222,9 +220,9 @@ namespace Caesura.Actors
             System.EndSessionPersistence(this);
         }
         
-        internal void InformParentOfUnhandledError(Exception e)
+        internal void InformParentOfError(Exception e)
         {
-            InternalParent.InformUnhandledError(Self, e);
+            InternalParent.InformError(Self, e);
         }
         
         internal void DestroyHandlerStack()
