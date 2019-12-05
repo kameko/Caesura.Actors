@@ -11,6 +11,7 @@ namespace Caesura.Actors
     // TODO: persistance handling, by saving the user's
     // IStateSerializeHandler/IStateDeserializeHandler
     // objects
+    // TODO: config, including allowing a custom scheduler.
     
     public class ActorSystem
     {
@@ -47,6 +48,13 @@ namespace Caesura.Actors
         
         public static ActorSystem Create(string name)
         {
+            // TODO: have a static ActorSystem instance counter, and have each
+            // scheduler use less threads the higher the counter is. So on a 4
+            // core machine, one instance would have a scheduler with 4 threads,
+            // then instancing a new one would cause the new system to instance with
+            // 2 threads, then the first instance would gracefully stop two of it's
+            // threads to evenly split the threads between the system. After there are
+            // more instances than threads, just have each instance run with one thread.
             return new ActorSystem(name);
         }
         
