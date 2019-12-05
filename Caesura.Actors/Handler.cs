@@ -74,6 +74,7 @@ namespace Caesura.Actors
         
         protected void InformParentOfError(Exception e)
         {
+            Owner.HasFaulted = true;
             Owner.InformParentOfError(e);
         }
     }

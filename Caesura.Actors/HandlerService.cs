@@ -10,6 +10,7 @@ namespace Caesura.Actors
     {
         private Actor Owner { get; set; }
         private List<BaseHandler> Handlers { get; set; }
+        internal object? CurrentMessage { get; set; }
         
         internal HandlerService(Actor owner)
         {
@@ -29,6 +30,7 @@ namespace Caesura.Actors
         
         internal ActorProcessingResult Handle(object data)
         {
+            CurrentMessage = data;
             var handled = false;
             
             foreach (var handler in Handlers)

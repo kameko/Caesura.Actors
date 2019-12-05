@@ -17,10 +17,9 @@ namespace Caesura.Actors
         protected IActorReference Parent => InternalParent;
         protected IReadOnlyList<IActorReference> Children => InternalChildren;
         protected MessageStash Stash { get; private set; }
-        internal HandlerService Handlers { get; set; }
-        internal Action<object>? OnAny { get; set; }
-        internal object? CurrentMessage { get; set; }
         
+        internal bool HasFaulted { get; set; }
+        internal HandlerService Handlers { get; set; }
         internal IActorReference InternalParent { get; set; }
         internal List<IActorReference> InternalChildren { get; set; }
         internal ActorLogger InternalLog { get; set; }
@@ -33,8 +32,8 @@ namespace Caesura.Actors
             Sender           = null!;
             Self             = null!;
             Stash            = null!;
-            Handlers         = null!;
             
+            Handlers         = null!;
             InternalParent   = null!;
             InternalChildren = null!;
             InternalLog      = null!;
@@ -47,8 +46,8 @@ namespace Caesura.Actors
             System           = system;
             Self             = new LocalActorReference(system, path);
             Stash            = new MessageStash(this);
-            Handlers         = new HandlerService(this);
             
+            Handlers         = new HandlerService(this);
             InternalParent   = parent;
             InternalChildren = new List<IActorReference>();
             InternalLog      = ActorLog;
@@ -188,8 +187,6 @@ namespace Caesura.Actors
         internal void ProcessMessage(IActorReference sender, object message)
         {
             Sender = sender;
-            CurrentMessage = message;
-            
             var result = Handlers.Handle(message);
             if (result == ActorProcessingResult.Unhandled)
             {
@@ -199,9 +196,9 @@ namespace Caesura.Actors
         
         protected void Unhandled()
         {
-            if (!(CurrentMessage is null))
+            if (!(Handlers.CurrentMessage is null))
             {
-                System.Unhandled(Sender, Self, CurrentMessage);
+                System.Unhandled(Sender, Self, Handlers.CurrentMessage);
             }
         }
         
