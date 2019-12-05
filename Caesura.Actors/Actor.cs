@@ -173,11 +173,6 @@ namespace Caesura.Actors
             actor.Tell(data, Sender);
         }
         
-        protected void Wait(TimeSpan time, Action<ActorContinuation> continue_with)
-        {
-            System.EnqueueWait(this, time, continue_with);
-        }
-        
         protected IActorReference NewChild(ActorSchematic schematic, string name)
         {
             var child = System.CreateChildActor(this, schematic, name);

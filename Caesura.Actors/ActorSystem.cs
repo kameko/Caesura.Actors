@@ -136,19 +136,6 @@ namespace Caesura.Actors
             return null;
         }
         
-        internal void EnqueueWait(Actor actor, TimeSpan time, Action<ActorContinuation> continue_with)
-        {
-            // TODO: have this send a special internal message type that will get
-            // sent back to the actor and run it's continue_with inside of the
-            // actor in a special internal Receive method.
-            // We'll send the message back to the actor after the timespan ends, which
-            // will be enqueued in a custom queue system.
-            // Don't forget to save the current message somewhere so the actor doesn't
-            // see the new internal message. Maybe have the internal message hold it.
-            
-            throw new NotImplementedException();
-        }
-        
         internal void EnqueueForMessageProcessing<T>(ActorPath receiver, T data, IActorReference sender)
         {
             if (!Actors.ContainsKey(receiver))
