@@ -131,27 +131,39 @@ namespace Caesura.Actors
                     {
                         try
                         {
-                            HandlerCallback?.Invoke(data);
-                            // TODO: handle async handler
+                            Process(data);
+                            return true;
                         }
-                        catch
+                        catch (Exception e)
                         {
-                            // TODO: log error
-                            
+                            Owner.InternalLog.Error(e, $"Handler threw an exception");
                             // Errored or not, the message was handled,
                             // so we don't want to pass it on to any other
                             // callbacks.
                             return true;
                         }
                     }
+                    else
+                    {
+                        return false;
+                    }
                 }
-                catch
+                catch (Exception e)
                 {
-                    // TODO: log error
+                    Owner.InternalLog.Error(e, $"Handle checker threw an exception");
+                    return false;
                 }
             }
-            
-            return false;
+            else
+            {
+                return false;
+            }
+        }
+        
+        protected void Process(T data)
+        {
+            HandlerCallback?.Invoke(data);
+            // TODO: handle async handler
         }
     }
     
@@ -208,26 +220,25 @@ namespace Caesura.Actors
                 {
                     try
                     {
-                        HandlerCallback?.Invoke(raw_data);
-                        // TODO: handle async handler
+                        Process(raw_data);
+                        return true;
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        // TODO: log error
-                        
-                        // Errored or not, the message was handled,
-                        // so we don't want to pass it on to any other
-                        // callbacks.
+                        Owner.InternalLog.Error(e, $"Handler threw an exception");
                         return true;
                     }
                 }
+                else
+                {
+                    return false;
+                }
             }
-            catch
+            catch (Exception e)
             {
-                // TODO: log error
+                Owner.InternalLog.Error(e, $"Handle checker threw an exception");
+                return false;
             }
-            
-            return false;
         }
     }
 }

@@ -20,8 +20,10 @@ namespace Caesura.Actors
         internal HandlerService Handlers { get; set; }
         internal Action<object>? OnAny { get; set; }
         internal object? CurrentMessage { get; set; }
+        
         internal IActorReference InternalParent { get; set; }
         internal List<IActorReference> InternalChildren { get; set; }
+        internal ActorLogger InternalLog { get; set; }
         
         public Actor()
         {
@@ -30,10 +32,12 @@ namespace Caesura.Actors
             System           = null!;
             Sender           = null!;
             Self             = null!;
-            InternalParent   = null!;
-            InternalChildren = null!;
             Stash            = null!;
             Handlers         = null!;
+            
+            InternalParent   = null!;
+            InternalChildren = null!;
+            InternalLog      = null!;
         }
         
         internal void Populate(ActorSystem system, IActorReference parent, ActorPath path)
@@ -42,10 +46,12 @@ namespace Caesura.Actors
             ActorLog         = new ActorLogger(this);
             System           = system;
             Self             = new LocalActorReference(system, path);
-            InternalParent   = parent;
-            InternalChildren = new List<IActorReference>();
             Stash            = new MessageStash(this);
             Handlers         = new HandlerService(this);
+            
+            InternalParent   = parent;
+            InternalChildren = new List<IActorReference>();
+            InternalLog      = ActorLog;
         }
         
         protected virtual void PreReload()
@@ -189,12 +195,18 @@ namespace Caesura.Actors
             Sender = sender;
             CurrentMessage = message;
             
-            return Handlers.Handle(message);
+            var result = Handlers.Handle(message);
+            if (result == ActorProcessingResult.Unhandled)
+            {
+                Unhandled();
+            }
+            
+            return result;
         }
         
         protected void Unhandled()
         {
-            if (CurrentMessage is { })
+            if (!(CurrentMessage is null))
             {
                 System.Unhandled(Sender, Self, CurrentMessage);
             }
