@@ -15,6 +15,8 @@ namespace Caesura.Actors
         public string Location => GetLocation();
         public string Protocol => GetProtocol();
         public string ProtocolExtension => GetProtocolExtension();
+        public bool IsLocal => string.IsNullOrEmpty(ProtocolExtension);
+        public bool IsRemote => !string.IsNullOrEmpty(ProtocolExtension);
         
         private string? NameCache;
         private string? LocationCache;

@@ -138,11 +138,11 @@ namespace Caesura.Actors
         
         internal void EnqueueForMessageProcessing<T>(ActorPath receiver, T data, IActorReference sender)
         {
-            if (!string.IsNullOrEmpty(receiver.ProtocolExtension))
+            if (receiver.IsRemote)
             {
                 AskNetwork(receiver, data, sender);
             }
-            else if (Actors.ContainsKey(receiver))
+            else if (receiver.IsLocal && Actors.ContainsKey(receiver))
             {
                 var token = new ActorQueueToken(this, receiver, typeof(T), (object)data!, sender);
                 ActorQueue.Add(token);
