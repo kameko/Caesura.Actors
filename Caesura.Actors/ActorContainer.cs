@@ -18,11 +18,13 @@ namespace Caesura.Actors
     {
         public Actor Actor { get; set; }
         public ActorStatus Status { get; set; }
+        public ActorSchematic Schematic { get; set; }
         
-        public ActorContainer(Actor actor)
+        public ActorContainer(ActorSchematic schematic, Actor actor)
         {
-            Status = ActorStatus.Ready;
-            Actor = actor;
+            Status    = ActorStatus.Ready;
+            Schematic = schematic;
+            Actor     = actor;
         }
     }
 }

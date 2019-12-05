@@ -7,7 +7,6 @@ namespace Caesura.Actors
     using System.Threading;
     using System.Threading.Tasks;
     
-    // TODO: scheduler
     // TODO: persistance handling, by saving the user's
     // IStateSerializeHandler/IStateDeserializeHandler
     // objects
@@ -40,7 +39,7 @@ namespace Caesura.Actors
             
             Root = new RootSupervisor(this);
             Root.Populate(this, ActorReferences.Nobody, Location);
-            var rootcontainer = new ActorContainer(Root);
+            var rootcontainer = new ActorContainer(new ActorSchematic(() => new RootSupervisor(this)), Root);
             Actors.Add(Location, rootcontainer);
             Root.CallOnCreate();
             
@@ -48,7 +47,7 @@ namespace Caesura.Actors
             
             Lost = new LostLetters(this);
             Lost.Populate(this, new LocalActorReference(this, Root.Path), new ActorPath(Location.Path, "lost-letters"));
-            var lostcontainer = new ActorContainer(Lost);
+            var lostcontainer = new ActorContainer(new ActorSchematic(() => new LostLetters(this)), Lost);
             Actors.Add(Lost.Path, lostcontainer);
             Lost.CallOnCreate();
             
@@ -185,14 +184,10 @@ namespace Caesura.Actors
         
         internal void InformUnhandledError(ActorPath receiver, IActorReference faulted_actor, Exception e)
         {
-            if (!Actors.ContainsKey(receiver))
-            {
-                return;
-            }
-            
-            var rec = Actors[receiver];
-            var msg = new Fault(faulted_actor, e);
+            var msg = new Fault(this, faulted_actor, e);
             EnqueueForMessageProcessing(receiver, msg, faulted_actor);
+            
+            DestroyActor(faulted_actor);
         }
         
         internal IActorReference CreateChildActor(Actor parent, ActorSchematic child, string child_name)
@@ -209,7 +204,7 @@ namespace Caesura.Actors
             // TODO: save schematic for revival
             
             actor.Populate(this, self, path);
-            var container = new ActorContainer(actor);
+            var container = new ActorContainer(child, actor);
             Actors.Add(actor.Path, container);
             parent.InternalChildren.Add(new LocalActorReference(this, actor.Path));
             actor.CallOnCreate();
