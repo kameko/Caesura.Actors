@@ -8,13 +8,30 @@ namespace Caesura.Actors
     
     public class Fault
     {
+        private ActorSystem System { get; set; }
         public IActorReference FaultedActor { get; private set; }
         public Exception Exception { get; private set; }
         
-        public Fault(IActorReference actor, Exception exception)
+        public Fault(ActorSystem system, IActorReference faulted_actor, Exception exception)
         {
-            FaultedActor = actor;
+            System       = system;
+            FaultedActor = faulted_actor;
             Exception    = exception;
+        }
+        
+        public void Restart()
+        {
+            // TODO: tell system to restart the actor
+        }
+        
+        public void Destroy()
+        {
+            // TODO: do nothing really, just log it.
+        }
+        
+        public void Escelate()
+        {
+            // TODO: send this to the parent
         }
     }
 }

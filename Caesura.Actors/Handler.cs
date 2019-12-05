@@ -74,7 +74,6 @@ namespace Caesura.Actors
         
         protected void InformParentOfError(Exception e)
         {
-            Owner.HasFaulted = true;
             Owner.InformParentOfError(e);
         }
     }
@@ -126,6 +125,7 @@ namespace Caesura.Actors
             catch (Exception e)
             {
                 Owner.InternalLog.Error(e, $"Handler threw an exception");
+                InformParentOfError(e);
             }
             // Always return true. If a HandleAny simply exists
             // at all then the message was handled.
