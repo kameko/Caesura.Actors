@@ -138,16 +138,38 @@ namespace Caesura.Actors
         
         internal void EnqueueForMessageProcessing<T>(ActorPath receiver, T data, IActorReference sender)
         {
-            if (!Actors.ContainsKey(receiver))
+            if (!string.IsNullOrEmpty(receiver.ProtocolExtension))
             {
-                // TODO: ask the network if they have this actor, otherwise...
-                var recpath = new LocalActorReference(this, receiver);
-                Unhandled(sender, recpath, (object)data!);
-                return;
+                AskNetwork(receiver, data, sender);
             }
+            else if (Actors.ContainsKey(receiver))
+            {
+                var token = new ActorQueueToken(this, receiver, typeof(T), (object)data!, sender);
+                ActorQueue.Add(token);
+            }
+            else
+            {
+                Unhandled(sender, receiver, data!);
+            }
+        }
+        
+        internal void AskNetwork<T>(ActorPath receiver, T data, IActorReference sender)
+        {
+            // TODO: check the network if it can handle the message. If not, treat it as
+            // unhandled both here and locally.
+            // TODO: before even bothering to ask the network, check if the actor path
+            // is a foreign one or not.
+            // We shouldn't hardcode this, it should be modular. Like I think the default
+            // should be "caesura.tcp.json://..." but it should be something people can
+            // write alternative protocols for.
             
-            var token = new ActorQueueToken(this, receiver, typeof(T), (object)data!, sender);
-            ActorQueue.Add(token);
+            throw new NotImplementedException();
+        }
+        
+        internal void Unhandled(IActorReference sender, ActorPath receiver, object message)
+        {
+            var recpath = new LocalActorReference(this, receiver);
+            Unhandled(sender, recpath, message);
         }
         
         internal void Unhandled(IActorReference sender, IActorReference receiver, object message)
