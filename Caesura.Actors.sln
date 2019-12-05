@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Caesura.Actors", "Caesura.A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Caesura.Actors.Tests", "Caesura.Actors.Tests\Caesura.Actors.Tests.csproj", "{686FB0CF-7EEB-45A5-B80D-AD4A1E9F35B7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Caesura.Actors.Tests.Manual", "Caesura.Actors.Tests.Manual\Caesura.Actors.Tests.Manual.csproj", "{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,17 @@ Global
 		{686FB0CF-7EEB-45A5-B80D-AD4A1E9F35B7}.Release|x64.Build.0 = Release|Any CPU
 		{686FB0CF-7EEB-45A5-B80D-AD4A1E9F35B7}.Release|x86.ActiveCfg = Release|Any CPU
 		{686FB0CF-7EEB-45A5-B80D-AD4A1E9F35B7}.Release|x86.Build.0 = Release|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Debug|x64.Build.0 = Debug|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Debug|x86.Build.0 = Debug|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Release|x64.ActiveCfg = Release|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Release|x64.Build.0 = Release|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Release|x86.ActiveCfg = Release|Any CPU
+		{15DF5E3C-EF92-42B8-BFE2-EB8942E8CC83}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
