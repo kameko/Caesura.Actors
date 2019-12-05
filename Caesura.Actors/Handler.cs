@@ -6,20 +6,19 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    public class Handler
+    public class BaseHandler
     {
-        // TODO: replicate Handle<T> but with objects
-        
         internal virtual bool Handle(object raw_data)
         {
             return false;
         }
     }
     
-    public class HandleAny : Handler
+    public class HandleAny : BaseHandler
     {
         private Actor Owner { get; set; }
         private Action<object>? HandlerCallback { get; set; }
+        private Func<object, Task>? HandlerCallbackAsync { get; set; }
         
         internal HandleAny(Actor owner)
         {
@@ -33,7 +32,23 @@ namespace Caesura.Actors
         
         public static HandleAny operator + (HandleAny handler, Action<object> handler_callback)
         {
+            if (!(handler.HandlerCallbackAsync is null))
+            {
+                throw new InvalidOperationException("Cannot set a handler if an async handler is already set.");
+            }
+            
             handler.HandlerCallback = handler_callback;
+            return handler;
+        }
+        
+        public static HandleAny operator + (HandleAny handler, Func<object, Task> handler_callback)
+        {
+            if (!(handler.HandlerCallback is null))
+            {
+                throw new InvalidOperationException("Cannot set an async handler if a handler is already set.");
+            }
+            
+            handler.HandlerCallbackAsync = handler_callback;
             return handler;
         }
         
@@ -42,6 +57,7 @@ namespace Caesura.Actors
             try
             {
                 HandlerCallback?.Invoke(raw_data);
+                // TODO: handle async handler
             }
             catch
             {
@@ -54,11 +70,12 @@ namespace Caesura.Actors
         }
     }
     
-    public class Handler<T> : Handler
+    public class Handler<T> : BaseHandler
     {
-        private Actor Owner { get; set; }
-        private Predicate<T>? CanHandle { get; set; }
-        private Action<T>? HandlerCallback { get; set; }
+        protected Actor Owner { get; set; }
+        protected Predicate<T>? CanHandle { get; set; }
+        protected Action<T>? HandlerCallback { get; set; }
+        protected Func<T, Task>? HandlerCallbackAsync { get; set; }
         
         internal Handler(Actor owner)
         {
@@ -79,18 +96,29 @@ namespace Caesura.Actors
         
         public static Handler<T> operator + (Handler<T> handler, Action<T> handler_callback)
         {
+            if (!(handler.HandlerCallbackAsync is null))
+            {
+                throw new InvalidOperationException("Cannot set a handler if an async handler is already set.");
+            }
+            
             handler.HandlerCallback = handler_callback;
             return handler;
         }
         
         public static Handler<T> operator + (Handler<T> handler, Func<T, Task> handler_callback)
         {
-            throw new NotImplementedException();
+            if (!(handler.HandlerCallback is null))
+            {
+                throw new InvalidOperationException("Cannot set an async handler if a handler is already set.");
+            }
+            
+            handler.HandlerCallbackAsync = handler_callback;
+            return handler;
         }
         
         internal override bool Handle(object raw_data)
         {
-            if (HandlerCallback is null)
+            if (HandlerCallback is null && HandlerCallbackAsync is null)
             {
                 return false;
             }
@@ -103,7 +131,8 @@ namespace Caesura.Actors
                     {
                         try
                         {
-                            HandlerCallback.Invoke(data);
+                            HandlerCallback?.Invoke(data);
+                            // TODO: handle async handler
                         }
                         catch
                         {
@@ -120,6 +149,82 @@ namespace Caesura.Actors
                 {
                     // TODO: log error
                 }
+            }
+            
+            return false;
+        }
+    }
+    
+    public class Handler : Handler<object>
+    {
+        internal Handler(Actor owner) : base(owner)
+        {
+            
+        }
+        
+        public static new Handler Create(Actor owner)
+        {
+            return new Handler(owner);
+        }
+        
+        public static Handler operator + (Handler handler, Predicate<object> can_handle)
+        {
+            handler.CanHandle = can_handle;
+            return handler;
+        }
+        
+        public static Handler operator + (Handler handler, Action<object> handler_callback)
+        {
+            if (!(handler.HandlerCallbackAsync is null))
+            {
+                throw new InvalidOperationException("Cannot set a handler if an async handler is already set.");
+            }
+            
+            handler.HandlerCallback = handler_callback;
+            return handler;
+        }
+        
+        public static Handler operator + (Handler handler, Func<object, Task> handler_callback)
+        {
+            if (!(handler.HandlerCallback is null))
+            {
+                throw new InvalidOperationException("Cannot set an async handler if a handler is already set.");
+            }
+            
+            handler.HandlerCallbackAsync = handler_callback;
+            return handler;
+        }
+        
+        internal override bool Handle(object raw_data)
+        {
+            if (HandlerCallback is null && HandlerCallbackAsync is null)
+            {
+                return false;
+            }
+            
+            try
+            {
+                if (CanHandle is null || CanHandle.Invoke(raw_data))
+                {
+                    try
+                    {
+                        HandlerCallback?.Invoke(raw_data);
+                        // TODO: handle async handler
+                    }
+                    catch
+                    {
+                        // TODO: log error
+                        
+                        // Errored or not, the message was handled,
+                        // so we don't want to pass it on to any other
+                        // callbacks.
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                // TODO: log error
             }
             
             return false;

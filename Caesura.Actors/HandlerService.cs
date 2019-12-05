@@ -9,15 +9,15 @@ namespace Caesura.Actors
     internal class HandlerService
     {
         private Actor Owner { get; set; }
-        private List<Handler> Handlers { get; set; }
+        private List<BaseHandler> Handlers { get; set; }
         
         internal HandlerService(Actor owner)
         {
             Owner    = owner;
-            Handlers = new List<Handler>();
+            Handlers = new List<BaseHandler>();
         }
         
-        internal void Add(Handler handler)
+        internal void Add(BaseHandler handler)
         {
             if (Handlers.Exists(x => x is HandleAny))
             {
