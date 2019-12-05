@@ -14,7 +14,7 @@ namespace Caesura.Actors
         static ActorReferences()
         {
             Nobody   = new NoActorReference("nobody");
-            NoSender = new NoActorReference("nosender");
+            NoSender = new NoActorReference("no-sender");
         }
         
         public class NoActorReference : IActorReference

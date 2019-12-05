@@ -13,6 +13,10 @@ namespace Caesura.Actors
         internal LostLetters(ActorSystem system)
         {
             System = system;
+        }
+        
+        protected override void OnCreate()
+        {
             Become(Behavior);
         }
         
@@ -30,7 +34,7 @@ namespace Caesura.Actors
                     $"Message from \"{letter.Sender.Path.Path}\" containing " +
                     $"{letter.Data.GetType().Name} did not reach target " +
                     $"at \"{letter.Receiver.Path.Path}\". " +
-                    "Data: ", new object[] { letter.Data }
+                    "Data: {0}", new object[] { letter.Data }
                 );
             };
             

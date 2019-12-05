@@ -17,6 +17,9 @@ namespace Caesura.Actors
         private Thread SchedulerThread { get; set; }
         private CancellationTokenSource CancelToken { get; set; }
         
+        private readonly object QueueLock = new object();
+        private readonly object PersistedLock = new object();
+        
         public Scheduler(ActorSystem system)
         {
             System          = system;
@@ -24,7 +27,7 @@ namespace Caesura.Actors
             PersistedActors = new List<Actor>();
             SchedulerThread = new Thread(SchedulerHandler);
             SchedulerThread.IsBackground = true;
-            SchedulerThread.Name = CreateName();
+            SchedulerThread.Name         = CreateName();
             CancelToken     = new CancellationTokenSource();
         }
         
@@ -57,69 +60,108 @@ namespace Caesura.Actors
             {
                 Spinup();
             }
-            Queue.Add(token);
+            
+            lock (QueueLock)
+            {
+                Queue.Add(token);
+            }
         }
         
         public void BeginSessionPersistence(Actor actor)
         {
-            if (PersistedActors.Contains(actor))
+            lock (PersistedLock)
             {
-                throw new InvalidOperationException($"Actor {actor.Path} is already having it's session persisted");
+                if (PersistedActors.Contains(actor))
+                {
+                    throw new InvalidOperationException($"Actor {actor.Path} is already having it's session persisted");
+                }
+                
+                PersistedActors.Add(actor);
             }
-            
-            PersistedActors.Add(actor);
         }
         
         public void EndSessionPersistence(Actor actor)
         {
-            if (!PersistedActors.Contains(actor))
+            lock (PersistedLock)
             {
-                throw new InvalidOperationException($"Actor {actor.Path} has not been persisted");
+                if (!PersistedActors.Contains(actor))
+                {
+                    throw new InvalidOperationException($"Actor {actor.Path} has not been persisted");
+                }
+                
+                PersistedActors.Remove(actor);
             }
-            
-            PersistedActors.Remove(actor);
         }
         
         private void SchedulerHandler()
         {
             while (IsRunning)
             {
-                if (Queue.Count == 0)
+                if (CancelToken.IsCancellationRequested)
                 {
-                    // TODO: check if it's been like, a second or two
-                    // if so, Spindown
-                    
-                    continue;
+                    break;
                 }
                 
                 if (Sleeping)
                 {
                     Thread.Sleep(15);
-                }
-                else
-                {
-                    var token = Queue.First();
-                    if (PersistedActors.Exists(x => x.Path == token.Receiver))
+                    
+                    if (CancelToken.IsCancellationRequested)
                     {
-                        ReEnqueue();
+                        break;
+                    }
+                    
+                    continue;
+                }
+                
+                lock (QueueLock)
+                {
+                    if (Queue.Count == 0)
+                    {
+                        // TODO: check if it's been like, a second or two
+                        // if so, Spindown
+                        
                         continue;
                     }
                     else
                     {
-                        Queue.Remove(token);
-                        var actor = System.GetActor(token.Receiver);
-                        if (!(actor is null))
+                        lock (PersistedLock)
                         {
-                            Task.Run(() =>
+                            var token = Queue.First();
+                            if (PersistedActors.Exists(x => x.Path == token.Receiver))
                             {
-                                Thread.CurrentThread.Name = token.Receiver.Path;
-                                actor.Actor.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
-                            },
-                            CancelToken.Token);
-                        }
-                        else
-                        {
-                            System.Unhandled(token.Sender, token.Receiver, token.Data);
+                                ReEnqueue();
+                                continue;
+                            }
+                            else
+                            {
+                                Queue.Remove(token);
+                                
+                                var actor = System.GetActor(token.Receiver)?.Actor;
+                                
+                                if (actor is null)
+                                {
+                                    Task.Run(() =>
+                                    {
+                                        Thread.CurrentThread.Name = token.Receiver.Path;
+                                        
+                                        // TODO: handle remote paths
+                                        var lost_receiver = new LocalActorReference(System, token.Receiver);
+                                        var lost_letter = new LostLetter(token.Sender, lost_receiver, token.Data);
+                                        System.Lost.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
+                                    },
+                                    CancelToken.Token);
+                                }
+                                else
+                                {
+                                    Task.Run(() =>
+                                    {
+                                        Thread.CurrentThread.Name = token.Receiver.Path;
+                                        actor.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
+                                    },
+                                    CancelToken.Token);
+                                }
+                            }
                         }
                     }
                 }
@@ -128,9 +170,12 @@ namespace Caesura.Actors
         
         private void ReEnqueue()
         {
-            var token = Queue.First();
-            Queue.Remove(token);
-            Queue.Add(token);
+            lock (QueueLock)
+            {
+                var token = Queue.First();
+                Queue.Remove(token);
+                Queue.Add(token);
+            }
         }
         
         private void Spinup()
@@ -152,7 +197,7 @@ namespace Caesura.Actors
             }
             else
             {
-                return $"{name} {ActorSystem.SystemCount}";
+                return $"{name} {ActorSystem.SystemCount + 1}";
             }
         }
     }

@@ -69,6 +69,11 @@ namespace Caesura.Actors
             
         }
         
+        protected virtual void OnCreate()
+        {
+            
+        }
+        
         public virtual IState Snapshot()
         {
             return default!;
@@ -122,6 +127,20 @@ namespace Caesura.Actors
             catch (Exception e)
             {
                 ActorLog.Verbose(e, $"Error calling {nameof(OnDestruction)}");
+            }
+        }
+        
+        internal ActorResult CallOnCreate()
+        {
+            try
+            {
+                OnCreate();
+                return new ActorResult(ActorProcessingResult.Success);
+            }
+            catch (Exception e)
+            {
+                ActorLog.Verbose(e, $"Error calling {nameof(OnCreate)}");
+                return new ActorResult(ActorProcessingResult.Errored, e);
             }
         }
         

@@ -13,6 +13,10 @@ namespace Caesura.Actors
         internal RootSupervisor(ActorSystem system)
         {
             System = system;
+        }
+        
+        protected override void OnCreate()
+        {
             Become(Behavior);
         }
         

@@ -23,8 +23,8 @@ namespace Caesura.Actors
         private Scheduler Scheduler { get; set; }
         internal ActorLogger Log { get; set; }
         
-        private RootSupervisor Root { get; set; }
-        private LostLetters Lost { get; set; }
+        internal RootSupervisor Root { get; set; }
+        internal LostLetters Lost { get; set; }
         
         static ActorSystem()
         {
@@ -33,15 +33,16 @@ namespace Caesura.Actors
         
         internal ActorSystem(string name)
         {
-            Name       = ActorPath.Sanitize(name);
-            Location   = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
-            Actors     = new Dictionary<ActorPath, ActorContainer>();
-            Scheduler  = new Scheduler(this);
+            Name      = ActorPath.Sanitize(name);
+            Location  = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
+            Actors    = new Dictionary<ActorPath, ActorContainer>();
+            Scheduler = new Scheduler(this);
             
             Root = new RootSupervisor(this);
             Root.Populate(this, ActorReferences.Nobody, Location);
             var rootcontainer = new ActorContainer(Root);
             Actors.Add(Location, rootcontainer);
+            Root.CallOnCreate();
             
             Log = new ActorLogger(Root);
             
@@ -49,6 +50,7 @@ namespace Caesura.Actors
             Lost.Populate(this, new LocalActorReference(this, Root.Path), new ActorPath(Location.Path, "lost-letters"));
             var lostcontainer = new ActorContainer(Lost);
             Actors.Add(Lost.Path, lostcontainer);
+            Lost.CallOnCreate();
             
             Scheduler.Start();
             
@@ -209,6 +211,9 @@ namespace Caesura.Actors
             actor.Populate(this, self, path);
             var container = new ActorContainer(actor);
             Actors.Add(actor.Path, container);
+            parent.InternalChildren.Add(new LocalActorReference(this, actor.Path));
+            actor.CallOnCreate();
+            
             return new LocalActorReference(this, actor.Path);
         }
         
