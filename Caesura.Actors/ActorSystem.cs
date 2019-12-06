@@ -7,6 +7,14 @@ namespace Caesura.Actors
     using System.Threading;
     using System.Threading.Tasks;
     
+    // TODO: consider renaming. possible names:
+    // - Horizon
+    // - Sundry (means "many")
+    // - Legion
+    // - Oozei (大勢 / おおぜい) - Many people
+    // - Consol - Corruption of "console" to match Solace
+    // - Scarlet
+    //
     // TODO: persistance handling, by saving the user's
     // IStateSerializeHandler/IStateDeserializeHandler
     // objects
