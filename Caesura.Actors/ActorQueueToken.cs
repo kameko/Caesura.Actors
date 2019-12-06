@@ -6,7 +6,7 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    internal class ActorQueueToken
+    public class ActorQueueToken
     {
         public ActorSystem System { get; private set; }
         public ActorPath Receiver { get; private set; }

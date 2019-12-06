@@ -7,7 +7,7 @@ namespace Caesura.Actors
     using System.Threading;
     using System.Threading.Tasks;
     
-    internal class Scheduler
+    internal class Scheduler : IScheduler
     {
         internal ActorSystem System { get; set; }
         private List<ActorQueueToken> Queue { get; set; }
@@ -20,15 +20,20 @@ namespace Caesura.Actors
         private readonly object QueueLock = new object();
         private readonly object PersistedLock = new object();
         
-        public Scheduler(ActorSystem system)
+        public Scheduler()
         {
-            System          = system;
+            System          = null!;
             Queue           = new List<ActorQueueToken>();
             PersistedActors = new List<Actor>();
             SchedulerThread = new Thread(SchedulerHandler);
             SchedulerThread.IsBackground = true;
             SchedulerThread.Name         = CreateName();
             CancelToken     = new CancellationTokenSource();
+        }
+        
+        public void AssignSystem(ActorSystem system)
+        {
+            System = system;
         }
         
         public void Start()

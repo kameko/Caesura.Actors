@@ -28,7 +28,7 @@ namespace Caesura.Actors
         public string Name { get; private set; }
         public ActorPath Location { get; private set; }
         private Dictionary<ActorPath, ActorContainer> Actors { get; set; }
-        private Scheduler Scheduler { get; set; }
+        private IScheduler Scheduler { get; set; }
         internal ActorLogger Log { get; set; }
         
         internal RootSupervisor Root { get; set; }
@@ -44,7 +44,9 @@ namespace Caesura.Actors
             Name      = ActorPath.Sanitize(name);
             Location  = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
             Actors    = new Dictionary<ActorPath, ActorContainer>();
-            Scheduler = new Scheduler(this);
+            Scheduler = new Scheduler();
+            
+            Scheduler.AssignSystem(this);
             
             Root = new RootSupervisor(this);
             Root.Populate(this, ActorReferences.Nobody, Location);
