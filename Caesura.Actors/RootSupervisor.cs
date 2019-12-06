@@ -40,12 +40,6 @@ namespace Caesura.Actors
                 
                 System.Shutdown();
             };
-            
-            var on_any = HandleAny.Create(this);
-            on_any += msg =>
-            {
-                
-            };
         }
         
         internal override void InformParentOfError(Exception e)
