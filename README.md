@@ -1,9 +1,9 @@
 
 ![logo](Tools/logo.png)
 
-A simple actor system inspired by Akka.NET, designed to be simpler, easier to use, more predictable, less overly-engineered, and designed with plugins (AssemblyLoadContext) in mind.
+Caesura.Actors is an actor framework for creating a straight-forward and configurable actor system. It is primarily targeted at providing the actor paradigm as a programming practice rather than as a microservice framework.
 
-Core functionality now in place!
+This project was created for [Solace](https://github.com/kameko/Solace).
 
 Critical things left to do:
  - TCP networking and networking layer
@@ -11,17 +11,14 @@ Critical things left to do:
  - NuGet package
 
 The system is largely similar to Akka.NET with several key differences:
- - There is no `Context` and `Tell`ing an actor always requires you to specify the sender. `Context` in Akka.NET is a static class and is tightly coupled with the time that the current actor is running, and will become invalid in callbacks or async contexts. We do away with that here. To alleviate the pain of having to explicitly define the sender actor every time, the base Actor class comes with it's own `Tell(actor, data)` method which sends it's own actor reference behind the scenes. Further, there is a `Respond(data)` method which responds to the sender of the current message, `Tattle(data)` which sends a message to the parent, and `TellChildren(data)` which sends the data to all children.
  - There are no `Receive` methods, instead you create a new `Handler` object which natively and transparently supports both synchronous and asynchronous methods through operator overloading. The Handler object has a lot more options and configurability than Akka's Receive does.
  - The actor logger and the message stash do not have to be manually added to an actor, they are part of the base Actor class.
  - There is only one base Actor class, which acts like Akka.NET's ReceiveActor.
  - The Tell method is generic and strongly-typed, there is no `Tell(object)` method.
- - The `Ask` method doesn't maliciously trick you into thinking you can do `async` in an actor by returning Task. Caesura.Actor's `Ask` instead returns nothing, and accepts a callback that is properly scheduled along with the actor.
- - There is currently no `BecomeStacked` method, only `Become`. It's so unused and specific that I probably won't add it.
  - You are not annoyingly forced to use an external library and HOCON file just to simply use the system's logging facilities. Just hook a method on to the logger callback. You know, like any normal library.
- - And most importantly, actors can be explicitly destroyed, immedately and permanently, and entirely removed from the system, every last trace of them. This is critical to a plugin system using `AssemblyLoadContext` so the system won't hold on to an assembly, and is why I was forced to write this library.
+ - And most importantly, actors can be explicitly destroyed, immedately and permanently, and entirely removed from the system. This is critical to a plugin system using `AssemblyLoadContext` so the system won't hold on to an assembly, and is why I was forced to write this library.
 
-I love the Akka.NET project, it's a wonderful project, I'm just frustrated :)
+I love Akka.NET, it's a wonderful project, I'm just frustrated :)
 
 ## Copyright and license
 
