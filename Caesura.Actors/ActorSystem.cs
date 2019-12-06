@@ -26,6 +26,7 @@ namespace Caesura.Actors
     {
         internal static int SystemCount { get; set; }
         
+        private readonly object ActorLock = new object();
         public string Name { get; private set; }
         public ActorPath Location { get; private set; }
         private Dictionary<ActorPath, ActorContainer> Actors { get; set; }
@@ -97,36 +98,41 @@ namespace Caesura.Actors
         public void DestroyActor(ActorPath path)
         {
             // TODO: handle destroying remote actor
-            var container = GetActor(path);
             
-            if (container is null)
+            lock (ActorLock)
             {
-                // TODO: log
-                return;
-            }
-            
-            container.Status = ActorStatus.Destroying;
-            
-            container.Actor.CallOnDestruction();
-            
-            container.Actor.DestroyHandlerStack();
-            
-            if (Actors.ContainsKey(container.Actor.InternalParent.Path))
-            {
-                // remove self from parent
-                var parent = Actors[container.Actor.InternalParent.Path];
-                var child_to_remove = parent.Actor.InternalChildren.Find(x => x.Path == path);
-                if (child_to_remove is { })
+                var container = GetActor(path);
+                
+                if (container is null)
                 {
-                    parent.Actor.InternalChildren.Remove(child_to_remove);
+                    // TODO: log
+                    return;
                 }
+                
+                container.Status = ActorStatus.Destroying;
+                
+                container.Actor.CallOnDestruction();
+                
+                container.Actor.DestroyHandlerStack();
+                
+                if (Actors.ContainsKey(container.Actor.InternalParent.Path))
+                {
+                    // remove self from parent
+                    var parent = Actors[container.Actor.InternalParent.Path];
+                    var child_to_remove = parent.Actor.InternalChildren.Find(x => x.Path == path);
+                    if (child_to_remove is { })
+                    {
+                        parent.Actor.InternalChildren.Remove(child_to_remove);
+                    }
+                }
+                
+                DestroyChildren(container);
+                
+                container.Status = ActorStatus.Destroyed;
+                
+                Actors.Remove(path);
+                Scheduler.InformActorDestruction(container);
             }
-            
-            DestroyChildren(container);
-            
-            container.Status = ActorStatus.Destroyed;
-            
-            Actors.Remove(path);
         }
         
         public void DestroyActor(string path) => DestroyActor(new ActorPath(path));
@@ -139,10 +145,17 @@ namespace Caesura.Actors
         
         internal ActorContainer? GetActor(ActorPath path)
         {
-            // TODO: handle remote
-            if (Actors.ContainsKey(path))
+            if (path.IsRemote)
             {
-                return Actors[path];
+                // TODO: log, maybe return a failure?
+                return null;
+            }
+            lock (ActorLock)
+            {
+                if (Actors.ContainsKey(path))
+                {
+                    return Actors[path];
+                }
             }
             return null;
         }
@@ -160,10 +173,17 @@ namespace Caesura.Actors
             {
                 AskNetwork(receiver, data, sender);
             }
-            else if (receiver.IsLocal && Actors.ContainsKey(receiver))
+            else if (receiver.IsLocal)
             {
-                var token = new ActorQueueToken(this, receiver, typeof(T), (object)data!, sender);
-                Scheduler.Enqueue(token);
+                lock (ActorLock)
+                {
+                    var container = GetActor(receiver);
+                    if (!(container is null))
+                    {
+                        var token = new ActorQueueToken(this, receiver, typeof(T), (object)data!, sender);
+                        Scheduler.Enqueue(container, token);
+                    }
+                }
             }
             else
             {
@@ -204,86 +224,97 @@ namespace Caesura.Actors
         {
             var path = new ActorPath(parent.Path.Path, child_name);
             
-            if (Actors.ContainsKey(path))
+            lock (ActorLock)
             {
-                throw new InvalidOperationException($"Actor with the path {path} already exists");
+                if (Actors.ContainsKey(path))
+                {
+                    throw new InvalidOperationException($"Actor with the path {path} already exists");
+                }
+                
+                var self = GetReference(parent.Path);
+                var actor = child.Create(this);
+                
+                if (actor is null)
+                {
+                    return ActorReferences.Nobody;
+                }
+            
+                actor.Populate(this, self, path);
+                var container = new ActorContainer(child, child_name, actor);
+                Actors.Add(actor.Path, container);
+                var reference = GetReference(actor.Path);
+                parent.InternalChildren.Add(reference);
+                actor.CallOnCreate();
+                
+                return reference;
             }
-            
-            var self = GetReference(parent.Path);
-            var actor = child.Create(this);
-            
-            if (actor is null)
-            {
-                return ActorReferences.Nobody;
-            }
-            
-            actor.Populate(this, self, path);
-            var container = new ActorContainer(child, child_name, actor);
-            Actors.Add(actor.Path, container);
-            var reference = GetReference(actor.Path);
-            parent.InternalChildren.Add(reference);
-            actor.CallOnCreate();
-            
-            return reference;
         }
         
         internal void DestroyFaultedActor(ActorPath receiver, IActorReference faulted_actor)
         {
-            var receiver_container = GetActor(receiver);
-            var faulted_container  = GetActor(faulted_actor.Path);
-            
-            if (receiver_container is null || faulted_container is null)
+            lock (ActorLock)
             {
+                var receiver_container = GetActor(receiver);
+                var faulted_container  = GetActor(faulted_actor.Path);
+                
+                if (receiver_container is null || faulted_container is null)
+                {
+                    // TODO: log
+                    return;
+                }
+                
                 // TODO: log
-                return;
+                
+                faulted_container.Actor.CallOnDestruction();
+                
+                receiver_container.Actor.InternalChildren.Remove(faulted_actor);
+                Actors.Remove(faulted_actor.Path);
+                Scheduler.InformActorDestruction(faulted_container);
             }
-            
-            // TODO: log
-            
-            faulted_container.Actor.CallOnDestruction();
-            
-            receiver_container.Actor.InternalChildren.Remove(faulted_actor);
-            Actors.Remove(faulted_actor.Path);
         }
         
         // TODO: handle collecting the state and passing it back
         internal void RestartFaultedActor(ActorPath receiver, IActorReference faulted_actor)
         {
-            var receiver_container = GetActor(receiver);
-            var faulted_container  = GetActor(faulted_actor.Path);
-            
-            if (receiver_container is null || faulted_container is null)
+            lock (ActorLock)
             {
-                // TODO: log
-                return;
-            }
-            
-            faulted_container.Actor.CallPreReload();
-            
-            var child = faulted_container.Schematic.Create(this);
-            if (child is null)
-            {
-                Log.Warning($"Attempted to re-create actor of {faulted_actor.Path} but it failed");
+                var receiver_container = GetActor(receiver);
+                var faulted_container  = GetActor(faulted_actor.Path);
                 
-                Actors.Remove(faulted_container.Actor.Path);
-                
-                var faulted_child_path = receiver_container.Actor.InternalChildren.Find(x => x.Path == faulted_container.Actor.Path);
-                if (!(faulted_child_path is null))
+                if (receiver_container is null || faulted_container is null)
                 {
-                    // faulted's children are already destroyed, so we don't need to worry about them.
-                    receiver_container.Actor.InternalChildren.Remove(faulted_child_path);
+                    // TODO: log
+                    return;
                 }
-                return;
+                
+                faulted_container.Actor.CallPreReload();
+                
+                var child = faulted_container.Schematic.Create(this);
+                if (child is null)
+                {
+                    Log.Warning($"Attempted to re-create actor of {faulted_actor.Path} but it failed");
+                    
+                    Actors.Remove(faulted_container.Actor.Path);
+                    Scheduler.InformActorDestruction(faulted_container);
+                    
+                    var faulted_child_path = receiver_container.Actor.InternalChildren.Find(x => x.Path == faulted_container.Actor.Path);
+                    if (!(faulted_child_path is null))
+                    {
+                        // faulted's children are already destroyed, so we don't need to worry about them.
+                        receiver_container.Actor.InternalChildren.Remove(faulted_child_path);
+                    }
+                    return;
+                }
+                
+                var parent_path = GetReference(receiver_container.Actor.Path);
+                child.Populate(this, parent_path, faulted_container.Actor.Path);
+                
+                faulted_container.Actor = child;
+                faulted_container.Unfault();
+                
+                child.CallOnCreate();
+                child.CallPostReload();
             }
-            
-            var parent_path = GetReference(receiver_container.Actor.Path);
-            child.Populate(this, parent_path, faulted_container.Actor.Path);
-            
-            faulted_container.Actor = child;
-            faulted_container.Unfault();
-            
-            child.CallOnCreate();
-            child.CallPostReload();
         }
         
         internal void FaultedActor(Actor actor, Exception e)

@@ -10,7 +10,8 @@ namespace Caesura.Actors.Internals
         void AssignSystem(ActorSystem system);
         void Start();
         void Stop();
-        void Enqueue(ActorQueueToken token);
+        void InformActorDestruction(ActorContainer container);
+        void Enqueue(ActorContainer container, ActorQueueToken token);
         void BeginSessionPersistence(Actor actor);
         void EndSessionPersistence(Actor actor);
     }

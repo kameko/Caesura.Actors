@@ -11,7 +11,7 @@ namespace Caesura.Actors
     internal class Scheduler : IScheduler
     {
         internal ActorSystem System { get; set; }
-        private List<ActorQueueToken> Queue { get; set; }
+        private List<ActorContainer> Queue { get; set; }
         private List<ActorPath> PersistedActors { get; set; }
         private bool Sleeping { get; set; }
         private bool IsRunning { get; set; }
@@ -24,7 +24,7 @@ namespace Caesura.Actors
         public Scheduler()
         {
             System          = null!;
-            Queue           = new List<ActorQueueToken>();
+            Queue           = new List<ActorContainer>();
             PersistedActors = new List<ActorPath>();
             SchedulerThread = new Thread(SchedulerHandler);
             SchedulerThread.IsBackground = true;
@@ -60,16 +60,30 @@ namespace Caesura.Actors
             CancelToken.Cancel();
         }
         
-        public void Enqueue(ActorQueueToken token)
+        public void InformActorDestruction(ActorContainer container)
+        {
+            lock (QueueLock)
+            {
+                if (Queue.Contains(container))
+                {
+                    // TODO: lost-letter everything in the container
+                    Queue.Remove(container);
+                }
+            }
+        }
+        
+        public void Enqueue(ActorContainer container, ActorQueueToken token)
         {
             if (Sleeping)
             {
                 Spinup();
             }
             
+            container.Enqueue(token);
+            
             lock (QueueLock)
             {
-                Queue.Add(token);
+                Queue.Add(container);
             }
         }
         
@@ -135,17 +149,23 @@ namespace Caesura.Actors
                     {
                         lock (PersistedLock)
                         {
-                            var token = Queue.First();
-                            if (PersistedActors.Exists(x => x == token.Receiver))
+                            // TODO: Parallel.For instead?
+                            var container = Queue.First();
+                            
+                            if (PersistedActors.Exists(x => x == container.Actor.Path))
                             {
                                 ReEnqueue();
                                 continue;
                             }
                             else
                             {
-                                Queue.Remove(token);
+                                Queue.Remove(container);
                                 
-                                var container = System.GetActor(token.Receiver);
+                                var token = container.Dequeue();
+                                if (token is null)
+                                {
+                                    return;
+                                }
                                 
                                 if (container is null)
                                 {
