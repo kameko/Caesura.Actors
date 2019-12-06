@@ -194,6 +194,12 @@ namespace Caesura.Actors
         
         internal void ProcessMessage(IActorReference sender, object message, CancellationToken cancel_token)
         {
+            if (message is Halt)
+            {
+                DestroySelf();
+                return;
+            }
+            
             if (HasFaulted)
             {
                 ActorLog.Warning("Actor cannot process any more messages, it has faulted");
