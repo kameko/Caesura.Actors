@@ -146,6 +146,14 @@ namespace Caesura.Actors
         
         protected void TellChildren<T>(T data)
         {
+            if (Children.Count == 0)
+            {
+                ActorLog.Warning(
+                    $"Tried to tell children message of {typeof(T)}, " +
+                    $"but no children to tell. Data: {data}"
+                );
+            }
+            
             foreach (var child in Children)
             {
                 child.Tell(data, Self);

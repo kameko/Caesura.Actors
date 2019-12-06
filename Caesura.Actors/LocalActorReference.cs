@@ -37,5 +37,10 @@ namespace Caesura.Actors
         {
             System.DestroyActor(this);
         }
+        
+        public override string ToString()
+        {
+            return Path.ToString();
+        }
     }
 }

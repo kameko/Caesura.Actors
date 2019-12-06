@@ -69,6 +69,8 @@ namespace Caesura.Actors
                     
                     Owner.InformParentOfError(fault.Exception);
                     System.FaultedActor(Owner, fault.Exception);
+                    
+                    return ActorProcessingResult.Errored;
                 }
                 
                 return ActorProcessingResult.Unhandled;

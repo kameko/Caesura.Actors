@@ -239,11 +239,6 @@ namespace Caesura.Actors.Tests.Manual
             ActorLog.Info("Hello, world!");
         }
         
-        protected override void PostReload()
-        {
-            ActorLog.Info("Reloaded!");
-        }
-        
         private void Behavior1()
         {
             var ping = Handler<string>.Create(this);
