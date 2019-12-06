@@ -73,7 +73,10 @@ namespace Caesura.Actors
             {
                 if (PersistedActors.Contains(actor))
                 {
-                    throw new InvalidOperationException($"Actor {actor.Path} is already having it's session persisted");
+                    // throw new InvalidOperationException($"Actor {actor.Path} is already having it's session persisted");
+                    
+                    // do nothing
+                    return;
                 }
                 
                 PersistedActors.Add(actor);
@@ -86,7 +89,10 @@ namespace Caesura.Actors
             {
                 if (!PersistedActors.Contains(actor))
                 {
-                    throw new InvalidOperationException($"Actor {actor.Path} has not been persisted");
+                    // throw new InvalidOperationException($"Actor {actor.Path} has not been persisted");
+                    
+                    // do nothing
+                    return;
                 }
                 
                 PersistedActors.Remove(actor);
@@ -141,16 +147,20 @@ namespace Caesura.Actors
                                 
                                 if (container is null)
                                 {
+                                    BeginSessionPersistence(System.Lost);
                                     Task.Run(() =>
                                     {
                                         Thread.CurrentThread.Name = token.Receiver.Path;
                                         
-                                        // TODO: handle remote paths
-                                        var lost_receiver = new LocalActorReference(System, token.Receiver);
+                                        var lost_receiver = System.GetReference(token.Receiver);
                                         var lost_letter = new LostLetter(token.Sender, lost_receiver, token.Data);
                                         System.Lost.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
                                     },
-                                    CancelToken.Token);
+                                    CancelToken.Token)
+                                    .ContinueWith(_ =>
+                                    {
+                                        EndSessionPersistence(System.Lost);
+                                    });
                                 }
                                 else if (container.Faulted)
                                 {
@@ -161,12 +171,17 @@ namespace Caesura.Actors
                                 {
                                     var actor = container.Actor;
                                     
+                                    BeginSessionPersistence(container.Actor);
                                     Task.Run(() =>
                                     {
                                         Thread.CurrentThread.Name = token.Receiver.Path;
                                         actor.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
                                     },
-                                    CancelToken.Token);
+                                    CancelToken.Token)
+                                    .ContinueWith(_ =>
+                                    {
+                                        EndSessionPersistence(container.Actor);
+                                    });
                                 }
                             }
                         }
