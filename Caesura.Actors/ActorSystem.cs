@@ -256,9 +256,9 @@ namespace Caesura.Actors
                 child.Populate(this, parent_path, faulted_container.Actor.Path);
                 
                 faulted_container.Actor = child;
-                
                 faulted_container.Unfault();
                 
+                child.CallOnCreate();
                 child.CallPostReload();
             }
         }
