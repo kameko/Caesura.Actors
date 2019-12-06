@@ -141,8 +141,8 @@ namespace Caesura.Actors.Tests.Manual
             {
                 var ping = PingAndPong.Item1;
                 var pong = PingAndPong.Item2;
-                Tell(ping, "DIE");
-                Tell(pong, "DIE");
+                Tell(ping, Halt.Instance);
+                Tell(pong, Halt.Instance);
             };
             
             var say_children = Handler<string>.Create(this);
@@ -257,14 +257,6 @@ namespace Caesura.Actors.Tests.Manual
                 ActorLog.Info("PING");
                 await Task.Delay(Delay);
                 Respond("PING");
-            };
-            
-            var die = Handler<string>.Create(this);
-            die += msg => StrEq(msg, "DIE");
-            die += msg =>
-            {
-                ActorLog.Info("GOODBYE! ;_; ");
-                DestroySelf();
             };
         }
     }
