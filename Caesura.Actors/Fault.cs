@@ -13,7 +13,7 @@ namespace Caesura.Actors
         public IActorReference FaultedActor { get; private set; }
         public Exception Exception { get; private set; }
         
-        public Fault(ActorSystem system, ActorPath receiver, IActorReference faulted_actor, Exception exception)
+        internal Fault(ActorSystem system, ActorPath receiver, IActorReference faulted_actor, Exception exception)
         {
             System       = system;
             Receiver     = receiver;
