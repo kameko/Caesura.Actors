@@ -31,6 +31,18 @@ namespace Caesura.Actors
             System.DestroyFaultedActor(Receiver, FaultedActor);
         }
         
+        public void DestroyAllChildren()
+        {
+            var receiver = System.GetActor(Receiver);
+            if (!(receiver is null))
+            {
+                foreach (var child in receiver.Actor.InternalChildren)
+                {
+                    System.DestroyActor(child);
+                }
+            }
+        }
+        
         public void Escelate()
         {
             var receiver = System.GetActor(Receiver);
