@@ -1,5 +1,5 @@
 
-namespace Caesura.Actors
+namespace Caesura.Actors.Internals
 {
     using System;
     using System.Collections.Generic;
@@ -8,11 +8,13 @@ namespace Caesura.Actors
     
     public class MessageStash
     {
+        private ActorSystem System { get; set; }
         private Actor Owner { get; set; }
         
-        public MessageStash(Actor owner)
+        public MessageStash(ActorSystem system, Actor owner)
         {
-            Owner = owner;
+            System = system;
+            Owner  = owner;
         }
         
         public void Stash()

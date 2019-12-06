@@ -6,7 +6,7 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    public class RootSupervisor : Actor
+    internal class RootSupervisor : Actor
     {
         internal ActorSystem System { get; set; }
         

@@ -6,6 +6,7 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Internals;
     
     // TODO: consider renaming. possible names:
     // - Horizon

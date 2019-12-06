@@ -6,7 +6,7 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    public class LostLetters : Actor
+    internal class LostLetters : Actor
     {
         internal ActorSystem System { get; set; }
         

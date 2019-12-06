@@ -1,5 +1,5 @@
 
-namespace Caesura.Actors
+namespace Caesura.Actors.Internals
 {
     using System;
     using System.Collections.Generic;

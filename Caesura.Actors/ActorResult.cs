@@ -6,14 +6,14 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading.Tasks;
     
-    public enum ActorProcessingResult
+    internal enum ActorProcessingResult
     {
         Success,
         Errored,
         Unhandled,
     }
     
-    public class ActorResult
+    internal class ActorResult
     {
         public ActorProcessingResult ProcessingResult { get; set; }
         public Exception? Exception { get; set; }

@@ -7,6 +7,7 @@ namespace Caesura.Actors
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Internals;
     
     public abstract class Actor : ITellable
     {
@@ -46,7 +47,7 @@ namespace Caesura.Actors
             ActorLog         = new ActorLogger(this);
             System           = system;
             Self             = new LocalActorReference(system, path);
-            Stash            = new MessageStash(this);
+            Stash            = new MessageStash(system, this);
             
             Handlers         = new HandlerService(system, this);
             InternalParent   = parent;
