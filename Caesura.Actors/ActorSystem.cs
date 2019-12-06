@@ -226,20 +226,24 @@ namespace Caesura.Actors
         
         internal void DestroyFaultedActor(ActorPath receiver, IActorReference faulted_actor)
         {
-            if (Actors.ContainsKey(receiver) && Actors.ContainsKey(faulted_actor.Path))
+            var receiver_container = GetActor(receiver);
+            var faulted_container  = GetActor(faulted_actor.Path);
+            
+            if (receiver_container is null || faulted_container is null)
             {
-                var receiver_container = GetActor(receiver);
-                var faulted_container  = GetActor(faulted_actor.Path);
-                
                 // TODO: log
-                
-                // TODO: remove from parent
-                Actors.Remove(faulted_actor.Path);
+                return;
             }
+            
+            // TODO: log
+            
+            faulted_container.Actor.CallOnDestruction();
+            
+            receiver_container.Actor.InternalChildren.Remove(faulted_actor);
+            Actors.Remove(faulted_actor.Path);
         }
         
         // TODO: handle collecting the state and passing it back
-        // FIXME: spawning an actor with the same name after the actor faulted doesn't throw
         internal void RestartFaultedActor(ActorPath receiver, IActorReference faulted_actor)
         {
             var receiver_container = GetActor(receiver);
