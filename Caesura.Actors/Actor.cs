@@ -14,7 +14,7 @@ namespace Caesura.Actors
         public ActorPath Path { get; private set; }
         private ActorSystem System { get; set; }
         protected ActorLogger ActorLog { get; private set; }
-        protected IActorReference Sender { get; private set; }
+        protected IActorReference Sender => InternalSender;
         protected IActorReference Self { get; private set; }
         protected IActorReference Parent => InternalParent;
         protected IReadOnlyList<IActorReference> Children => InternalChildren;
@@ -22,6 +22,7 @@ namespace Caesura.Actors
         
         internal bool HasFaulted { get; set; }
         internal HandlerService Handlers { get; set; }
+        internal IActorReference InternalSender { get; set; }
         internal IActorReference InternalParent { get; set; }
         internal List<IActorReference> InternalChildren { get; set; }
         internal ActorLogger InternalLog { get; set; }
@@ -31,7 +32,7 @@ namespace Caesura.Actors
             Path             = null!;
             ActorLog         = null!;
             System           = null!;
-            Sender           = null!;
+            InternalSender   = null!;
             Self             = null!;
             Stash            = null!;
             
@@ -168,7 +169,7 @@ namespace Caesura.Actors
         
         protected void Respond<T>(T data)
         {
-            Sender.Tell(data, Self);
+            InternalSender.Tell(data, Self);
         }
         
         protected void Tell<T>(IActorReference actor, T data)
@@ -178,7 +179,7 @@ namespace Caesura.Actors
         
         protected void Forward<T>(IActorReference actor, T data)
         {
-            actor.Tell(data, Sender);
+            actor.Tell(data, InternalSender);
         }
         
         protected IActorReference NewChild(ActorSchematic schematic, string name)
@@ -211,7 +212,7 @@ namespace Caesura.Actors
                 return;
             }
             
-            Sender = sender;
+            InternalSender = sender;
             var result = Handlers.Handle(message);
             if (result == ActorProcessingResult.Unhandled)
             {
@@ -223,7 +224,7 @@ namespace Caesura.Actors
         {
             if (!(Handlers.CurrentMessage is null))
             {
-                System.Unhandled(Sender, Self, Handlers.CurrentMessage);
+                System.Unhandled(InternalSender, Self, Handlers.CurrentMessage);
             }
         }
         
