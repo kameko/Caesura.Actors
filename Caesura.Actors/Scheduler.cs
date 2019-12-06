@@ -12,7 +12,7 @@ namespace Caesura.Actors
     {
         internal ActorSystem System { get; set; }
         private List<ActorQueueToken> Queue { get; set; }
-        private List<Actor> PersistedActors { get; set; }
+        private List<ActorPath> PersistedActors { get; set; }
         private bool Sleeping { get; set; }
         private bool IsRunning { get; set; }
         private Thread SchedulerThread { get; set; }
@@ -25,7 +25,7 @@ namespace Caesura.Actors
         {
             System          = null!;
             Queue           = new List<ActorQueueToken>();
-            PersistedActors = new List<Actor>();
+            PersistedActors = new List<ActorPath>();
             SchedulerThread = new Thread(SchedulerHandler);
             SchedulerThread.IsBackground = true;
             SchedulerThread.Name         = CreateName();
@@ -77,15 +77,13 @@ namespace Caesura.Actors
         {
             lock (PersistedLock)
             {
-                if (PersistedActors.Contains(actor))
+                if (PersistedActors.Contains(actor.Path))
                 {
-                    // throw new InvalidOperationException($"Actor {actor.Path} is already having it's session persisted");
-                    
                     // do nothing
                     return;
                 }
                 
-                PersistedActors.Add(actor);
+                PersistedActors.Add(actor.Path);
             }
         }
         
@@ -93,15 +91,13 @@ namespace Caesura.Actors
         {
             lock (PersistedLock)
             {
-                if (!PersistedActors.Contains(actor))
+                if (!PersistedActors.Contains(actor.Path))
                 {
-                    // throw new InvalidOperationException($"Actor {actor.Path} has not been persisted");
-                    
                     // do nothing
                     return;
                 }
                 
-                PersistedActors.Remove(actor);
+                PersistedActors.Remove(actor.Path);
             }
         }
         
@@ -140,7 +136,7 @@ namespace Caesura.Actors
                         lock (PersistedLock)
                         {
                             var token = Queue.First();
-                            if (PersistedActors.Exists(x => x.Path == token.Receiver))
+                            if (PersistedActors.Exists(x => x == token.Receiver))
                             {
                                 ReEnqueue();
                                 continue;
