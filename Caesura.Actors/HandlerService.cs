@@ -62,6 +62,11 @@ namespace Caesura.Actors
             {
                 if (data is Fault fault)
                 {
+                    // the missed message was a Fault, which means
+                    // the child actor threw an exception and the
+                    // parent didn't handle it, so now it's the
+                    // parent's exception.
+                    
                     Owner.InformParentOfError(fault.Exception);
                     System.FaultedActor(Owner, fault.Exception);
                 }
