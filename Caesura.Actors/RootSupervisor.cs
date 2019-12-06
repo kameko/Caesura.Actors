@@ -50,7 +50,15 @@ namespace Caesura.Actors
         
         internal override void InformParentOfError(Exception e)
         {
-            // TODO: I dunno, send self a Fault message?
+            if (Children.Count == 0)
+            {
+                ActorLog.Warning("Tried to inform root supervisor of an error when it has no children to error");
+                return;
+            }
+            var child_ref = Children[0];
+            var fault = new Fault(System, Self.Path, child_ref, e);
+            
+            Self.Tell(fault, child_ref);
         }
     }
 }
