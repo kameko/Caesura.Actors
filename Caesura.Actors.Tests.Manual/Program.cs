@@ -59,7 +59,7 @@ namespace Caesura.Actors.Tests.Manual
                         }
                         actor1.Tell((command, arguments), ActorReferences.NoSender);
                         break;
-                    case "SPAWN-ACTOR2":
+                    case "SPAWN-ACTOR":
                         if (string.IsNullOrEmpty(arguments))
                         {
                             continue;
@@ -74,6 +74,12 @@ namespace Caesura.Actors.Tests.Manual
                         break;
                     case "CHILDREN":
                         actor1.Tell(command, ActorReferences.NoSender);
+                        break;
+                    case "FAULT":
+                        actor1.Tell(command, ActorReferences.NoSender);
+                        break;
+                    default:
+                        Console.WriteLine("?");
                         break;
                 }
             }
@@ -104,7 +110,7 @@ namespace Caesura.Actors.Tests.Manual
             };
             
             var spawn_actor2 = Handler<(string Command, string Name)>.Create(this);
-            spawn_actor2 += msg => StrEq(msg.Command, "SPAWN-ACTOR2");
+            spawn_actor2 += msg => StrEq(msg.Command, "SPAWN-ACTOR");
             spawn_actor2 += msg =>
             {
                 ActorLog.Info("Spawning child...");
@@ -145,6 +151,21 @@ namespace Caesura.Actors.Tests.Manual
             {
                 ActorLog.Info($"Children: {Children.Count}");
             };
+            
+            var fault_child = Handler<string>.Create(this);
+            fault_child += msg => StrEq(msg, "FAULT");
+            fault_child += msg =>
+            {
+                ActorLog.Info("Faulting children...");
+                TellChildren("FAULT");
+            };
+            
+            var on_fault = Handler<Fault>.Create(this);
+            on_fault += fault =>
+            {
+                ActorLog.Info($"Restarting child {fault.FaultedActor}");
+                fault.Restart();
+            };
         }
     }
     
@@ -156,6 +177,16 @@ namespace Caesura.Actors.Tests.Manual
             ActorLog.Info("Hello, world!");
         }
         
+        protected override void PreReload()
+        {
+            ActorLog.Info("Preloading");
+        }
+        
+        protected override void PostReload()
+        {
+            ActorLog.Info("Post Reloading");
+        }
+        
         private void Behavior1()
         {
             var respond = Handler<string>.Create(this);
@@ -165,6 +196,8 @@ namespace Caesura.Actors.Tests.Manual
                 ActorLog.Info("Switching to Behavior2");
                 Become(Behavior2);
             };
+            
+            CommonBehavior();
         }
         
         private void Behavior2()
@@ -176,6 +209,18 @@ namespace Caesura.Actors.Tests.Manual
                 ActorLog.Info("Switching to Behavior1");
                 Become(Behavior1);
             };
+            
+            CommonBehavior();
+        }
+        
+        private void CommonBehavior()
+        {
+            var fault_self = Handler<string>.Create(this);
+            fault_self += msg => StrEq(msg, "FAULT");
+            fault_self += (Action<string>)(msg =>
+            {
+                throw new Exception("uh oh!");
+            });
         }
     }
     
@@ -192,6 +237,11 @@ namespace Caesura.Actors.Tests.Manual
         {
             Become(Behavior1);
             ActorLog.Info("Hello, world!");
+        }
+        
+        protected override void PostReload()
+        {
+            ActorLog.Info("Reloaded!");
         }
         
         private void Behavior1()

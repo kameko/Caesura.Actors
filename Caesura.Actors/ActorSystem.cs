@@ -19,6 +19,7 @@ namespace Caesura.Actors
     // IStateSerializeHandler/IStateDeserializeHandler
     // objects
     // TODO: config, including allowing a custom scheduler.
+    // TODO: Actors isn't thread-safe, look into that.
     
     public class ActorSystem : IDisposable
     {
@@ -87,12 +88,8 @@ namespace Caesura.Actors
         
         public void DestroyActor(IActorReference reference)
         {
-            var paths = Actors.Where(x => x.Key == reference.Path);
-            if (paths.Count() > 0)
-            {
-                var path = paths.First().Key;
-                DestroyActor(path);
-            }
+            var kv_path = Actors.ToList().Find(x => x.Key == reference.Path);
+            DestroyActor(kv_path.Key);
         }
         
         public void DestroyActor(ActorPath path)
@@ -130,8 +127,8 @@ namespace Caesura.Actors
         
         public void Shutdown()
         {
+            Log.Info($"Shutting down actor system {Location} ...");
             Scheduler.Stop();
-            throw new NotImplementedException();
         }
         
         internal ActorContainer? GetActor(ActorPath path)
@@ -196,6 +193,12 @@ namespace Caesura.Actors
         internal IActorReference CreateChildActor(Actor parent, ActorSchematic child, string child_name)
         {
             var path = new ActorPath(parent.Path.Path, child_name);
+            
+            if (Actors.ContainsKey(path))
+            {
+                throw new InvalidOperationException($"Actor with the path {path} already exists");
+            }
+            
             var self = new LocalActorReference(this, parent.Path);
             var actor = child.Create(this);
             
@@ -294,7 +297,8 @@ namespace Caesura.Actors
         private void DestroyChildren(ActorContainer container)
         {
             // recursively destroy children
-            foreach (var child in container.Actor.InternalChildren)
+            var children = new List<IActorReference>(container.Actor.InternalChildren);
+            foreach (var child in children)
             {
                 DestroyActor(child.Path);
             }
