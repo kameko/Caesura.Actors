@@ -47,5 +47,10 @@ namespace Caesura.Actors
                 
             };
         }
+        
+        internal override void InformParentOfError(Exception e)
+        {
+            // TODO: I dunno, send self a Fault message?
+        }
     }
 }

@@ -15,7 +15,7 @@ namespace Caesura.Actors
             Factory = factory;
         }
         
-        internal Actor? Create()
+        internal Actor? Create(ActorSystem system)
         {
             try
             {

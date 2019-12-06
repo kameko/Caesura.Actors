@@ -47,7 +47,7 @@ namespace Caesura.Actors
             
             Root = new RootSupervisor(this);
             Root.Populate(this, ActorReferences.Nobody, Location);
-            var rootcontainer = new ActorContainer(new ActorSchematic(() => new RootSupervisor(this)), Root);
+            var rootcontainer = new ActorContainer(new ActorSchematic(() => new RootSupervisor(this)), Location.Name, Root);
             Actors.Add(Location, rootcontainer);
             Root.CallOnCreate();
             
@@ -55,7 +55,7 @@ namespace Caesura.Actors
             
             Lost = new LostLetters(this);
             Lost.Populate(this, new LocalActorReference(this, Root.Path), new ActorPath(Location.Path, "lost-letters"));
-            var lostcontainer = new ActorContainer(new ActorSchematic(() => new LostLetters(this)), Lost);
+            var lostcontainer = new ActorContainer(new ActorSchematic(() => new LostLetters(this)), "lost-letters", Lost);
             Actors.Add(Lost.Path, lostcontainer);
             Lost.CallOnCreate();
             
@@ -99,18 +99,18 @@ namespace Caesura.Actors
         {
             if (Actors.ContainsKey(path))
             {
-                var actor = Actors[path];
+                var container = Actors[path];
                 
-                actor.Status = ActorStatus.Destroying;
+                container.Status = ActorStatus.Destroying;
                 
-                actor.Actor.CallOnDestruction();
+                container.Actor.CallOnDestruction();
                 
-                actor.Actor.DestroyHandlerStack();
+                container.Actor.DestroyHandlerStack();
                 
-                if (Actors.ContainsKey(actor.Actor.InternalParent.Path))
+                if (Actors.ContainsKey(container.Actor.InternalParent.Path))
                 {
                     // remove self from parent
-                    var parent = Actors[actor.Actor.InternalParent.Path];
+                    var parent = Actors[container.Actor.InternalParent.Path];
                     var child_to_remove = parent.Actor.InternalChildren.Find(x => x.Path == path);
                     if (child_to_remove is { })
                     {
@@ -118,14 +118,9 @@ namespace Caesura.Actors
                     }
                 }
                 
-                // recursively destroy children
-                foreach (var child in actor.Actor.InternalChildren)
-                {
-                    var cpath = child.Path;
-                    DestroyActor(path);
-                }
+                DestroyChildren(container);
                 
-                actor.Status = ActorStatus.Destroyed;
+                container.Status = ActorStatus.Destroyed;
                 
                 Actors.Remove(path);
             }
@@ -202,22 +197,107 @@ namespace Caesura.Actors
         {
             var path = new ActorPath(parent.Path.Path, child_name);
             var self = new LocalActorReference(this, parent.Path);
-            var actor = child.Create();
+            var actor = child.Create(this);
             
             if (actor is null)
             {
                 return ActorReferences.Nobody;
             }
             
-            // TODO: save schematic for revival
-            
             actor.Populate(this, self, path);
-            var container = new ActorContainer(child, actor);
+            var container = new ActorContainer(child, child_name, actor);
             Actors.Add(actor.Path, container);
             parent.InternalChildren.Add(new LocalActorReference(this, actor.Path));
             actor.CallOnCreate();
             
             return new LocalActorReference(this, actor.Path);
+        }
+        
+        internal void DestroyFaultedActor(ActorPath receiver, IActorReference faulted_actor)
+        {
+            if (Actors.ContainsKey(receiver) && Actors.ContainsKey(faulted_actor.Path))
+            {
+                var receiver_container = Actors[receiver];
+                var faulted_container = Actors[faulted_actor.Path];
+                
+                // TODO: log
+                
+                Actors.Remove(faulted_actor.Path);
+            }
+        }
+        
+        internal void RestartFaultedActor(ActorPath receiver, IActorReference faulted_actor)
+        {
+            if (Actors.ContainsKey(receiver) && Actors.ContainsKey(faulted_actor.Path))
+            {
+                var receiver_container = Actors[receiver];
+                var faulted_container = Actors[faulted_actor.Path];
+                
+                faulted_container.Actor.CallPreReload();
+                
+                var child = faulted_container.Schematic.Create(this);
+                if (child is null)
+                {
+                    // TODO: log
+                    
+                    Actors.Remove(faulted_container.Actor.Path);
+                    
+                    var faulted_child_path = receiver_container.Actor.InternalChildren.Find(x => x.Path == faulted_container.Actor.Path);
+                    if (!(faulted_child_path is null))
+                    {
+                        // faulted's children are already destroyed, so we don't need to worry about them.
+                        receiver_container.Actor.InternalChildren.Remove(faulted_child_path);
+                    }
+                    return;
+                }
+                
+                // TODO: handle remote
+                var parent_path = new LocalActorReference(this, receiver_container.Actor.Path);
+                child.Populate(this, parent_path, faulted_container.Actor.Path);
+                
+                faulted_container.Actor = child;
+                
+                faulted_container.Unfault();
+                
+                child.CallPostReload();
+            }
+        }
+        
+        internal void FaultedActor(ActorPath path, Exception e)
+        {
+            if (Actors.ContainsKey(path))
+            {
+                FaultedActor(Actors[path], e);
+            }
+        }
+        
+        internal void FaultedActor(Actor actor, Exception e)
+        {
+            if (Actors.ContainsKey(actor.Path))
+            {
+                FaultedActor(Actors[actor.Path], e);
+            }
+        }
+        
+        private void FaultedActor(ActorContainer container, Exception e)
+        {
+            // TODO: destroy but do not remove reference
+            // TODO: handle remote paths
+            var reference = new LocalActorReference(this, container.Actor.Path);
+            container.Actor.InternalParent.InformError(reference, e);
+            container.SetFault(e);
+            
+            container.Actor.CallOnDestruction();
+            DestroyChildren(container);
+        }
+        
+        private void DestroyChildren(ActorContainer container)
+        {
+            // recursively destroy children
+            foreach (var child in container.Actor.InternalChildren)
+            {
+                DestroyActor(child.Path);
+            }
         }
         
         internal void BeginSessionPersistence(Actor actor)

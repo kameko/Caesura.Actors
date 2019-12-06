@@ -137,9 +137,9 @@ namespace Caesura.Actors
                             {
                                 Queue.Remove(token);
                                 
-                                var actor = System.GetActor(token.Receiver)?.Actor;
+                                var container = System.GetActor(token.Receiver);
                                 
-                                if (actor is null)
+                                if (container is null)
                                 {
                                     Task.Run(() =>
                                     {
@@ -152,8 +152,15 @@ namespace Caesura.Actors
                                     },
                                     CancelToken.Token);
                                 }
+                                else if (container.Faulted)
+                                {
+                                    ReEnqueue();
+                                    continue;
+                                }
                                 else
                                 {
+                                    var actor = container.Actor;
+                                    
                                     Task.Run(() =>
                                     {
                                         Thread.CurrentThread.Name = token.Receiver.Path;

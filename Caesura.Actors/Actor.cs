@@ -48,7 +48,7 @@ namespace Caesura.Actors
             Self             = new LocalActorReference(system, path);
             Stash            = new MessageStash(this);
             
-            Handlers         = new HandlerService(this);
+            Handlers         = new HandlerService(system, this);
             InternalParent   = parent;
             InternalChildren = new List<IActorReference>();
             InternalLog      = ActorLog;
@@ -232,10 +232,10 @@ namespace Caesura.Actors
             System.EndSessionPersistence(this);
         }
         
-        internal void InformParentOfError(Exception e)
+        internal virtual void InformParentOfError(Exception e)
         {
             HasFaulted = true;
-            InternalParent.InformError(Self, e);
+            System.FaultedActor(this, e);
         }
         
         internal void DestroyHandlerStack()

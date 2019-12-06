@@ -23,17 +23,21 @@ namespace Caesura.Actors
         
         public void Restart()
         {
-            // TODO: tell system to restart the actor
+            System.RestartFaultedActor(Receiver, FaultedActor);
         }
         
         public void Destroy()
         {
-            // TODO: do nothing really, just log it.
+            System.DestroyFaultedActor(Receiver, FaultedActor);
         }
         
         public void Escelate()
         {
-            // TODO: send this to the parent
+            var receiver = System.GetActor(Receiver);
+            if (!(receiver is null))
+            {
+                receiver.Actor.InternalParent.InformError(FaultedActor, Exception);
+            }
         }
     }
 }

@@ -8,12 +8,14 @@ namespace Caesura.Actors
     
     internal class HandlerService
     {
+        private ActorSystem System { get; set; }
         private Actor Owner { get; set; }
         private List<BaseHandler> Handlers { get; set; }
         internal object? CurrentMessage { get; set; }
         
-        internal HandlerService(Actor owner)
+        internal HandlerService(ActorSystem system, Actor owner)
         {
+            System   = system;
             Owner    = owner;
             Handlers = new List<BaseHandler>();
         }
@@ -58,6 +60,12 @@ namespace Caesura.Actors
             }
             else
             {
+                if (data is Fault fault)
+                {
+                    Owner.InformParentOfError(fault.Exception);
+                    System.FaultedActor(Owner, fault.Exception);
+                }
+                
                 return ActorProcessingResult.Unhandled;
             }
         }
