@@ -32,7 +32,7 @@ namespace Caesura.Actors
             {
                 ActorLog.Fatal(
                     fault.Exception,
-                    $"System supervisor encountered an unhandled exception." +
+                    $"System supervisor encountered an unhandled exception. " +
                     $"Actor system will now be shut down."
                 );
                 
