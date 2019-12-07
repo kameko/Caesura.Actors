@@ -12,7 +12,7 @@ namespace Caesura.Actors
     {
         internal ActorSystem System { get; set; }
         private List<ActorContainer> Queue { get; set; }
-        private List<ActorPath> PersistedActors { get; set; }
+        private List<SessionToken> PersistedActors { get; set; }
         private bool Sleeping { get; set; }
         private bool IsRunning { get; set; }
         private Thread SchedulerThread { get; set; }
@@ -25,7 +25,7 @@ namespace Caesura.Actors
         {
             System          = null!;
             Queue           = new List<ActorContainer>();
-            PersistedActors = new List<ActorPath>();
+            PersistedActors = new List<SessionToken>();
             SchedulerThread = new Thread(SchedulerHandler);
             SchedulerThread.IsBackground = true;
             CancelToken     = new CancellationTokenSource();
@@ -119,13 +119,15 @@ namespace Caesura.Actors
         {
             lock (PersistedLock)
             {
-                if (PersistedActors.Contains(actor.Path))
+                var token = PersistedActors.Find(x => x.Path == actor.Path);
+                if (token is null)
                 {
-                    // TODO: count how many times it's been persisted
-                    return;
+                    PersistedActors.Add(new SessionToken(actor.Path));
                 }
-                
-                PersistedActors.Add(actor.Path);
+                else
+                {
+                    token.Count++;
+                }
             }
         }
         
@@ -133,15 +135,15 @@ namespace Caesura.Actors
         {
             lock (PersistedLock)
             {
-                if (!PersistedActors.Contains(actor.Path))
+                var token = PersistedActors.Find(x => x.Path == actor.Path);
+                if (!(token is null))
                 {
-                    // do nothing
-                    return;
+                    token.Count--;
+                    if (token.Count <= 0)
+                    {
+                        PersistedActors.Remove(token);
+                    }
                 }
-                
-                // TODO: only remove if the persistence count is 0
-                
-                PersistedActors.Remove(actor.Path);
             }
         }
         
@@ -224,7 +226,7 @@ namespace Caesura.Actors
         
         private void Process(ActorContainer container)
         {
-            if (PersistedActors.Exists(x => x == container.Actor.Path))
+            if (PersistedActors.Exists(x => x.Path == container.Actor.Path))
             {
                 ReEnqueue();
                 return;
@@ -304,6 +306,18 @@ namespace Caesura.Actors
         {
             var name = $"scheduler.{ActorSystem.SystemCount}.{System.Location}";
             return name;
+        }
+        
+        private class SessionToken
+        {
+            public ActorPath Path { get; set; }
+            public int Count { get; set; }
+            
+            public SessionToken(ActorPath path)
+            {
+                Path  = path;
+                Count = 1;
+            }
         }
     }
 }
