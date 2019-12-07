@@ -10,9 +10,12 @@ namespace Caesura.Actors.Networking
     
     internal class TcpNetworkHost : INetworkHost
     {
-        // TODO: create TcpListener to listen for clients and then create a TcpClient and connect
-        // to all servers in the RemoteNodes collection in the system config
+        // TODO: create TcpListener to listen for clients and then create a TcpClient per server
+        // in the RemoteNodes collection in the system config
         // https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcplistener?view=netcore-3.0 
+        // TODO: we'll cache the entire networked actor system here for easier, quicker lookup.
+        // To ensure consistency, have each node ask the entire system for it's local actor system
+        // periodically, default every minute.
         
         private ActorSystem System { get; set; }
         
