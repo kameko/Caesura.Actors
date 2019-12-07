@@ -26,6 +26,7 @@ namespace Caesura.Actors.Tests.Manual
             var config = new ActorsConfiguration()
             {
                 VerboseLogAllMessages = true,
+                // ParallelScheduler = true,
             };
             
             var system = ActorSystem.Create("my-system", config);
@@ -163,7 +164,6 @@ namespace Caesura.Actors.Tests.Manual
             fault_child += msg => StrEq(msg, "FAULT");
             fault_child += msg =>
             {
-                ActorLog.Info("Faulting children...");
                 TellChildren("FAULT");
             };
             
@@ -252,7 +252,6 @@ namespace Caesura.Actors.Tests.Manual
             ping += msg => StrEq(msg, "PING");
             ping += async msg =>
             {
-                ActorLog.Info("PONG");
                 await Task.Delay(Delay);
                 Respond("PONG");
             };
@@ -261,7 +260,6 @@ namespace Caesura.Actors.Tests.Manual
             pong += msg => StrEq(msg, "PONG");
             pong += async msg =>
             {
-                ActorLog.Info("PING");
                 await Task.Delay(Delay);
                 Respond("PING");
             };

@@ -121,7 +121,7 @@ namespace Caesura.Actors
             {
                 if (PersistedActors.Contains(actor.Path))
                 {
-                    // do nothing
+                    // TODO: count how many times it's been persisted
                     return;
                 }
                 
@@ -139,12 +139,18 @@ namespace Caesura.Actors
                     return;
                 }
                 
+                // TODO: only remove if the persistence count is 0
+                
                 PersistedActors.Remove(actor.Path);
             }
         }
         
         private void SchedulerHandler()
         {
+            var po = new ParallelOptions();
+            po.CancellationToken = CancelToken.Token;
+            po.MaxDegreeOfParallelism = Environment.ProcessorCount;
+            
             while (IsRunning)
             {
                 if (CancelToken.IsCancellationRequested)
@@ -178,68 +184,89 @@ namespace Caesura.Actors
                     {
                         lock (PersistedLock)
                         {
-                            // TODO: Parallel.For instead?
-                            // well, give the user an option, that would be bad if the
-                            // workload isn't heavy.
-                            
-                            var container = Queue.First();
-                            
-                            if (PersistedActors.Exists(x => x == container.Actor.Path))
+                            if (System.Config.ParallelScheduler)
                             {
-                                ReEnqueue();
-                                continue;
+                                try
+                                {
+                                    Parallel.ForEach(Queue, po, container =>
+                                    {
+                                        Process(container);
+                                    });
+                                }
+                                catch (OperationCanceledException e)
+                                {
+                                    System.Log.Info(e, $"Parallel operation canceled in {SchedulerThread.Name}");
+                                }
+                                catch (AggregateException e)
+                                {
+                                    System.Log.Info(e, $"Error in parallel operation in {SchedulerThread.Name}");
+                                }
                             }
                             else
                             {
-                                Queue.Remove(container);
-                                
-                                var token = container.Dequeue();
-                                if (token is null)
-                                {
-                                    return;
-                                }
-                                
-                                if (container is null)
-                                {
-                                    BeginSessionPersistence(System.Lost);
-                                    Task.Run(() =>
-                                    {
-                                        Thread.CurrentThread.Name = token.Receiver.Path;
-                                        
-                                        var lost_receiver = System.GetReference(token.Receiver);
-                                        var lost_letter = new LostLetter(token.Sender, lost_receiver, token.Data);
-                                        System.Lost.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
-                                    },
-                                    CancelToken.Token)
-                                    .ContinueWith(_ =>
-                                    {
-                                        EndSessionPersistence(System.Lost);
-                                    });
-                                }
-                                else if (container.Faulted)
-                                {
-                                    ReEnqueue();
-                                    continue;
-                                }
-                                else
-                                {
-                                    var actor = container.Actor;
-                                    
-                                    BeginSessionPersistence(container.Actor);
-                                    Task.Run(() =>
-                                    {
-                                        Thread.CurrentThread.Name = token.Receiver.Path;
-                                        actor.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
-                                    },
-                                    CancelToken.Token)
-                                    .ContinueWith(_ =>
-                                    {
-                                        EndSessionPersistence(container.Actor);
-                                    });
-                                }
+                                var container = Queue.First();
+                                Process(container);
                             }
                         }
                     }
+                }
+            }
+        }
+        
+        private void Process(ActorContainer container)
+        {
+            if (PersistedActors.Exists(x => x == container.Actor.Path))
+            {
+                ReEnqueue();
+                return;
+            }
+            else
+            {
+                Queue.Remove(container);
+                
+                var token = container.Dequeue();
+                if (token is null)
+                {
+                    return;
+                }
+                
+                if (container is null)
+                {
+                    BeginSessionPersistence(System.Lost);
+                    Task.Run(() =>
+                    {
+                        Thread.CurrentThread.Name = token.Receiver.Path;
+                        
+                        var lost_receiver = System.GetReference(token.Receiver);
+                        var lost_letter = new LostLetter(token.Sender, lost_receiver, token.Data);
+                        System.Lost.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
+                    },
+                    CancelToken.Token)
+                    .ContinueWith(_ =>
+                    {
+                        EndSessionPersistence(System.Lost);
+                    });
+                }
+                else if (container.Faulted)
+                {
+                    ReEnqueue();
+                    return;
+                }
+                else
+                {
+                    var actor = container.Actor;
+                    
+                    BeginSessionPersistence(container.Actor);
+                    Task.Run(() =>
+                    {
+                        Thread.CurrentThread.Name = token.Receiver.Path;
+                        actor.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
+                    },
+                    CancelToken.Token)
+                    .ContinueWith(_ =>
+                    {
+                        EndSessionPersistence(container.Actor);
+                    });
                 }
             }
         }
