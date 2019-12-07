@@ -199,14 +199,88 @@ namespace Caesura.Actors
             return Handler<T>.Create(this);
         }
         
+        protected Handler<T> Handle<T>(Action<T> handler)
+        {
+            var handle = Handler<T>.Create(this);
+            handle += handler;
+            return handle;
+        }
+        
+        protected Handler<T> Handle<T>(Predicate<T> can_handle, Action<T> handler)
+        {
+            var handle = Handler<T>.Create(this);
+            handle += can_handle;
+            handle += handler;
+            return handle;
+        }
+        
+        protected Handler<T> Handle<T>(Func<T, Task> handler)
+        {
+            var handle = Handler<T>.Create(this);
+            handle += handler;
+            return handle;
+        }
+        
+        protected Handler<T> Handle<T>(Predicate<T> can_handle, Func<T, Task> handler)
+        {
+            var handle = Handler<T>.Create(this);
+            handle += can_handle;
+            handle += handler;
+            return handle;
+        }
+        
         protected Handler Handle()
         {
             return Handler.Create(this);
         }
         
+        protected Handler Handle(Action<object> handler)
+        {
+            var handle = Handler.Create(this);
+            handle += handler;
+            return handle;
+        }
+        
+        protected Handler Handle(Predicate<object> can_handle, Action<object> handler)
+        {
+            var handle = Handler.Create(this);
+            handle += can_handle;
+            handle += handler;
+            return handle;
+        }
+        
+        protected Handler Handle(Func<object, Task> handler)
+        {
+            var handle = Handler.Create(this);
+            handle += handler;
+            return handle;
+        }
+        
+        protected Handler Handle(Predicate<object> can_handle, Func<object, Task> handler)
+        {
+            var handle = Handler.Create(this);
+            handle += can_handle;
+            handle += handler;
+            return handle;
+        }
+        
         protected HandleAny AnyHandler()
         {
             return HandleAny.Create(this);
+        }
+        
+        protected HandleAny AnyHandler(Action<object> handler)
+        {
+            var handle = HandleAny.Create(this);
+            handle += handler;
+            return handle;
+        }
+        
+        protected HandleAny AnyHandler(Func<object, Task> handler)
+        {
+            var handle = HandleAny.Create(this);
+            handle += handler;
+            return handle;
         }
         
         internal void ProcessMessage(IActorReference sender, object message, CancellationToken cancel_token)
