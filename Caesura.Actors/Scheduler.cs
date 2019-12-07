@@ -237,6 +237,7 @@ namespace Caesura.Actors
                 var token = container.Dequeue();
                 if (token is null)
                 {
+                    System.Log.Debug($"Scheduled actor {container.Actor.Path} but the container's queue was empty");
                     return;
                 }
                 
@@ -258,7 +259,8 @@ namespace Caesura.Actors
                 }
                 else if (container.Faulted)
                 {
-                    ReEnqueue();
+                    // put it back in the queue for now
+                    Queue.Add(container);
                     return;
                 }
                 else
