@@ -194,6 +194,21 @@ namespace Caesura.Actors
             method.Invoke();
         }
         
+        protected Handler<T> Handle<T>()
+        {
+            return Handler<T>.Create(this);
+        }
+        
+        protected Handler Handle()
+        {
+            return Handler.Create(this);
+        }
+        
+        protected HandleAny AnyHandler()
+        {
+            return HandleAny.Create(this);
+        }
+        
         internal void ProcessMessage(IActorReference sender, object message, CancellationToken cancel_token)
         {
             if (System.Config.VerboseLogAllMessages)

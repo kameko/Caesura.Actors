@@ -20,14 +20,9 @@ namespace Caesura.Actors
             Become(Behavior);
         }
         
-        protected override void OnDestruction()
-        {
-            System.Shutdown();
-        }
-        
         private void Behavior()
         {
-            var on_lost = Handler<LostLetter>.Create(this);
+            var on_lost = Handle<LostLetter>();
             on_lost += letter =>
             {
                 if (!System.Config.LogLostLetters)
@@ -43,7 +38,7 @@ namespace Caesura.Actors
                 );
             };
             
-            var on_any = HandleAny.Create(this);
+            var on_any = AnyHandler();
             on_any += msg =>
             {
                 ActorLog.Warning(

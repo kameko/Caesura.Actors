@@ -110,14 +110,14 @@ namespace Caesura.Actors.Tests.Manual
         
         private void Behavior1()
         {
-            var respond = Handler<(string Command, string Message)>.Create(this);
+            var respond = Handle<(string Command, string Message)>();
             respond += msg => StrEq(msg.Command, "LOG");
             respond += msg =>
             {
                 ActorLog.Info(msg.Message);
             };
             
-            var spawn_actor2 = Handler<(string Command, string Name)>.Create(this);
+            var spawn_actor2 = Handle<(string Command, string Name)>();
             spawn_actor2 += msg => StrEq(msg.Command, "SPAWN-ACTOR");
             spawn_actor2 += msg =>
             {
@@ -126,7 +126,7 @@ namespace Caesura.Actors.Tests.Manual
                 NewChild(new ActorSchematic(() => new Actor2()), msg.Name);
             };
             
-            var spawn_pingpong = Handler<(string Command, string Delay)>.Create(this);
+            var spawn_pingpong = Handle<(string Command, string Delay)>();
             spawn_pingpong += msg => StrEq(msg.Command, "PINGPONG");
             spawn_pingpong += msg =>
             {
@@ -143,7 +143,7 @@ namespace Caesura.Actors.Tests.Manual
                 ping.Tell("PING", pong);
             };
             
-            var end_pingpong = Handler<string>.Create(this);
+            var end_pingpong = Handle<string>();
             end_pingpong += msg => StrEq(msg, "STOP-PINGPONG");
             end_pingpong += msg =>
             {
@@ -153,21 +153,21 @@ namespace Caesura.Actors.Tests.Manual
                 Tell(pong, Halt.Instance);
             };
             
-            var say_children = Handler<string>.Create(this);
+            var say_children = Handle<string>();
             say_children += msg => StrEq(msg, "CHILDREN");
             say_children += msg =>
             {
                 ActorLog.Info($"Children: {Children.Count}");
             };
             
-            var fault_child = Handler<string>.Create(this);
+            var fault_child = Handle<string>();
             fault_child += msg => StrEq(msg, "FAULT");
             fault_child += msg =>
             {
                 TellChildren("FAULT");
             };
             
-            var on_fault = Handler<Fault>.Create(this);
+            var on_fault = Handle<Fault>();
             on_fault += fault =>
             {
                 if (fault.Exception.Message == "RESTART ME")
@@ -215,7 +215,7 @@ namespace Caesura.Actors.Tests.Manual
         
         private void Behavior1()
         {
-            var respond = Handler<string>.Create(this);
+            var respond = Handle<string>();
             respond += msg => StrEq(msg, "SWITCH");
             respond += msg =>
             {
@@ -228,7 +228,7 @@ namespace Caesura.Actors.Tests.Manual
         
         private void Behavior2()
         {
-            var respond = Handler<string>.Create(this);
+            var respond = Handle<string>();
             respond += msg => StrEq(msg, "SWITCH");
             respond += msg =>
             {
@@ -241,7 +241,7 @@ namespace Caesura.Actors.Tests.Manual
         
         private void CommonBehavior()
         {
-            var fault_self = Handler<string>.Create(this);
+            var fault_self = Handle<string>();
             fault_self += msg => StrEq(msg, "FAULT");
             fault_self += (Action<string>)(msg =>
             {
@@ -267,7 +267,7 @@ namespace Caesura.Actors.Tests.Manual
         
         private void Behavior1()
         {
-            var ping = Handler<string>.Create(this);
+            var ping = Handle<string>();
             ping += msg => StrEq(msg, "PING");
             ping += async msg =>
             {
@@ -275,7 +275,7 @@ namespace Caesura.Actors.Tests.Manual
                 Respond("PONG");
             };
             
-            var pong = Handler<string>.Create(this);
+            var pong = Handle<string>();
             pong += msg => StrEq(msg, "PONG");
             pong += async msg =>
             {

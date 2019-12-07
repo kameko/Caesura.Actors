@@ -27,7 +27,7 @@ namespace Caesura.Actors
         
         private void Behavior()
         {
-            var on_fault = Handler<Fault>.Create(this);
+            var on_fault = Handle<Fault>();
             on_fault += fault =>
             {
                 ActorLog.Fatal(
