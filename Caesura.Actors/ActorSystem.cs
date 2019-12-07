@@ -32,6 +32,7 @@ namespace Caesura.Actors
         private Dictionary<ActorPath, ActorContainer> Actors { get; set; }
         private IScheduler Scheduler { get; set; }
         internal ActorLogger Log { get; set; }
+        internal ActorsConfiguration Config { get; private set; }
         
         internal RootSupervisor Root { get; set; }
         internal LostLetters Lost { get; set; }
@@ -41,8 +42,10 @@ namespace Caesura.Actors
             SystemCount = 0;
         }
         
-        internal ActorSystem(string name)
+        internal ActorSystem(string name, ActorsConfiguration? config)
         {
+            Config    = config ?? ActorsConfiguration.CreateDefault();
+            
             Name      = ActorPath.Sanitize(name);
             Location  = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
             Actors    = new Dictionary<ActorPath, ActorContainer>();
@@ -69,9 +72,19 @@ namespace Caesura.Actors
             SystemCount++;
         }
         
+        internal ActorSystem(string name) : this(name, null)
+        {
+            
+        }
+        
         public static ActorSystem Create(string name)
         {
             return new ActorSystem(name);
+        }
+        
+        public static ActorSystem Create(string name, ActorsConfiguration config)
+        {
+            return new ActorSystem(name, config);
         }
         
         public void WaitForSystemShutdown()

@@ -22,7 +22,13 @@ namespace Caesura.Actors.Tests.Manual
             Console.WriteLine("Starting system...");
             
             SetupLogger();
-            var system = ActorSystem.Create("my-system");
+            
+            var config = new ActorsConfiguration()
+            {
+                VerboseLogAllMessages = true,
+            };
+            
+            var system = ActorSystem.Create("my-system", config);
             var actor1 = system.NewActor(new ActorSchematic(() => new Supervisor()), "supervisor");
             
             var running = true;

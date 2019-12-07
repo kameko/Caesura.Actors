@@ -196,6 +196,11 @@ namespace Caesura.Actors
         
         internal void ProcessMessage(IActorReference sender, object message, CancellationToken cancel_token)
         {
+            if (System.Config.VerboseLogAllMessages)
+            {
+                ActorLog.Verbose($"Message sent from {sender}: {{0}}", new object[]{ message });
+            }
+            
             if (message is Halt)
             {
                 DestroySelf();
