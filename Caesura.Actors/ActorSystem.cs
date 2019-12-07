@@ -18,6 +18,7 @@ namespace Caesura.Actors
     //
     // TODO: persistance handling, by saving the user's
     // IStateSerializeHandler/IStateDeserializeHandler objects
+    // TODO: this could use some refactoring, it's a bit of a god class
     
     public class ActorSystem : IDisposable
     {
@@ -339,9 +340,10 @@ namespace Caesura.Actors
             }
         }
         
-        // TODO: handle collecting the state and passing it back
         internal void RestartFaultedActor(ActorPath receiver, IActorReference faulted_actor)
         {
+            // TODO: handle collecting the state and passing it back
+            // TODO: handle remote
             lock (ActorLock)
             {
                 var receiver_container = GetActor(receiver);
