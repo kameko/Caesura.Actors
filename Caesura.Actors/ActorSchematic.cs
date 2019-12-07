@@ -15,7 +15,7 @@ namespace Caesura.Actors
             Factory = factory;
         }
         
-        internal Actor? Create(ActorSystem system, ActorPath path)
+        internal Actor? Create(ActorSystem system, ActorPath parent_path, ActorPath path)
         {
             try
             {
@@ -25,6 +25,15 @@ namespace Caesura.Actors
             catch (Exception e)
             {
                 system.Log.Warning(e, $"Factory could not instance actor {path}");
+                var parent = system.GetReference(parent_path);
+                if (parent is null)
+                {
+                    system.Log.Warning($"Attempted to warn parent of faulted schematic for {path} but could not find it");
+                }
+                else
+                {
+                    parent.InformError(parent, e);
+                }
                 return null;
             }
         }

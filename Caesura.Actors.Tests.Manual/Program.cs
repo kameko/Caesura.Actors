@@ -170,18 +170,32 @@ namespace Caesura.Actors.Tests.Manual
             var on_fault = Handler<Fault>.Create(this);
             on_fault += fault =>
             {
-                ActorLog.Info($"Restarting child {fault.FaultedActor}");
-                fault.Restart();
+                if (fault.Exception.Message == "RESTART ME")
+                {
+                    ActorLog.Info($"Restarting child {fault.FaultedActor}");
+                    fault.Restart();
+                }
+                else
+                {
+                    ActorLog.Info($"Destroying child {fault.FaultedActor}");
+                    fault.Destroy();
+                }
             };
         }
     }
     
     public class Actor2 : Actor
     {
+        public Actor2()
+        {
+            // throw new Exception("oops!");
+        }
+        
         protected override void OnCreate()
         {
             Become(Behavior1);
             ActorLog.Info("Hello, world!");
+            // throw new Exception("oops!");
         }
         
         protected override void PreReload()
@@ -226,7 +240,7 @@ namespace Caesura.Actors.Tests.Manual
             fault_self += msg => StrEq(msg, "FAULT");
             fault_self += (Action<string>)(msg =>
             {
-                throw new Exception("uh oh!");
+                throw new Exception("RESTART ME");
             });
         }
     }

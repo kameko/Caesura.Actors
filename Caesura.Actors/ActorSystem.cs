@@ -271,7 +271,7 @@ namespace Caesura.Actors
                 }
                 
                 var self = GetReference(parent.Path);
-                var actor = child.Create(this, path);
+                var actor = child.Create(this, parent.Path, path);
                 
                 if (actor is null)
                 {
@@ -286,7 +286,12 @@ namespace Caesura.Actors
                 
                 Log.Info($"Created actor {path}");
                 
-                actor.CallOnCreate();
+                var result = actor.CallOnCreate();
+                
+                if (result.ProcessingResult == ActorProcessingResult.Errored)
+                {
+                    InformUnhandledError(parent.Path, reference, result.Exception!);
+                }
                 
                 return reference;
             }
@@ -354,7 +359,7 @@ namespace Caesura.Actors
                 
                 faulted_container.Actor.CallPreReload();
                 
-                var child = faulted_container.Schematic.Create(this, faulted_actor.Path);
+                var child = faulted_container.Schematic.Create(this, receiver, faulted_actor.Path);
                 if (child is null)
                 {
                     Log.Warning($"Attempted to re-create actor of {faulted_actor.Path} but it failed");
