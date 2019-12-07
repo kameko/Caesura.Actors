@@ -73,7 +73,28 @@ namespace Caesura.Actors
             {
                 if (Queue.Contains(container))
                 {
-                    // TODO: lost-letter everything in the container
+                    BeginSessionPersistence(System.Lost);
+                    Task.Run(() =>
+                    {
+                        Thread.CurrentThread.Name = System.Lost.Path.Path;
+                        foreach (var token in container.Dump())
+                        {
+                            if (CancelToken.IsCancellationRequested)
+                            {
+                                break;
+                            }
+                            
+                            var lost_receiver = System.GetReference(token.Receiver);
+                            var lost_letter = new LostLetter(token.Sender, lost_receiver, token.Data);
+                            System.Lost.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
+                        }
+                    },
+                    CancelToken.Token)
+                    .ContinueWith(_ =>
+                    {
+                        EndSessionPersistence(System.Lost);
+                    });
+                    
                     Queue.Remove(container);
                 }
             }

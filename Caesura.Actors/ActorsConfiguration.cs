@@ -10,11 +10,15 @@ namespace Caesura.Actors
     {
         public bool VerboseLogAllMessages { get; set; }
         public bool ManuallyStartScheduler { get; set; }
+        public bool LogLostLetters { get; set; }
+        public bool ParallelScheduler { get; set; }
         
         public ActorsConfiguration()
         {
             VerboseLogAllMessages  = false;
             ManuallyStartScheduler = false;
+            LogLostLetters         = true;
+            ParallelScheduler      = false;
         }
         
         internal static ActorsConfiguration CreateDefault()

@@ -30,6 +30,11 @@ namespace Caesura.Actors
             var on_lost = Handler<LostLetter>.Create(this);
             on_lost += letter =>
             {
+                if (!System.Config.LogLostLetters)
+                {
+                    return;
+                }
+                
                 ActorLog.Info(
                     $"Message from \"{letter.Sender.Path.Path}\" containing " +
                     $"{letter.Data.GetType().Name} did not reach target " +

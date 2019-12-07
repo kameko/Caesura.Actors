@@ -57,6 +57,16 @@ namespace Caesura.Actors.Internals
             }
         }
         
+        public IEnumerable<ActorQueueToken> Dump()
+        {
+            lock (TokenLock)
+            {
+                var tokens = new List<ActorQueueToken>(Tokens);
+                Tokens.Clear();
+                return tokens;
+            }
+        }
+        
         public void SetFault(Exception e)
         {
             Faulted = true;
