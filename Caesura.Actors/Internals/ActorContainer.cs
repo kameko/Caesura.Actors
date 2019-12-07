@@ -5,7 +5,6 @@ namespace Caesura.Actors.Internals
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Internals;
     
     public enum ActorStatus
     {
@@ -23,7 +22,7 @@ namespace Caesura.Actors.Internals
         public ActorStatus Status { get; set; }
         public ActorSchematic Schematic { get; set; }
         public bool Faulted { get; private set; }
-        public Exception? Fault { get; set; }
+        public Exception? Fault { get; private set; }
         private readonly object TokenLock = new object();
         
         public ActorContainer(ActorSchematic schematic, string name, Actor actor)
