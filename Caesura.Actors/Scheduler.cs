@@ -43,7 +43,7 @@ namespace Caesura.Actors
             {
                 try
                 {
-                    System.Log.Debug($"Starting scheduler {SchedulerThread.Name}");
+                    System.Log.Debug($"Starting {SchedulerThread.Name}");
                     CancelToken = new CancellationTokenSource();
                     IsRunning = true;
                     SchedulerThread.Start();
@@ -54,11 +54,15 @@ namespace Caesura.Actors
                     System.Log.Verbose(e, $"{SchedulerThread.Name}");
                 }
             }
+            else
+            {
+                System.Log.Debug($"Tried starting {SchedulerThread.Name} but it is already running");
+            }
         }
         
         public void Stop()
         {
-            System.Log.Debug($"Stopping scheduler {SchedulerThread.Name}");
+            System.Log.Debug($"Stopping {SchedulerThread.Name}");
             IsRunning = false;
             CancelToken.Cancel();
         }

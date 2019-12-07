@@ -67,7 +67,10 @@ namespace Caesura.Actors
             Actors.Add(Lost.Path, lostcontainer);
             Lost.CallOnCreate();
             
-            Scheduler.Start();
+            if (!Config.ManuallyStartScheduler)
+            {
+                Scheduler.Start();
+            }
             
             SystemCount++;
         }
@@ -85,6 +88,15 @@ namespace Caesura.Actors
         public static ActorSystem Create(string name, ActorsConfiguration config)
         {
             return new ActorSystem(name, config);
+        }
+        
+        /// <summary>
+        /// Only call if ActorsConfiguration.ManuallyStartScheduler is set to true,
+        /// otherwise this is called automatically.
+        /// </summary>
+        public void Start()
+        {
+            Scheduler.Start();
         }
         
         public void WaitForSystemShutdown()

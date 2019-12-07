@@ -9,10 +9,12 @@ namespace Caesura.Actors
     public class ActorsConfiguration
     {
         public bool VerboseLogAllMessages { get; set; }
+        public bool ManuallyStartScheduler { get; set; }
         
         public ActorsConfiguration()
         {
-            VerboseLogAllMessages = false;
+            VerboseLogAllMessages  = false;
+            ManuallyStartScheduler = false;
         }
         
         internal static ActorsConfiguration CreateDefault()
