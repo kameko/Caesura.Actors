@@ -10,11 +10,13 @@ namespace Caesura.Actors
     {
         public static IActorReference Nobody { get; private set; }
         public static IActorReference NoSender { get; private set; }
+        public static IActorReference LostActor { get; private set; }
         
         static ActorReferences()
         {
-            Nobody   = new NoActorReference("nobody");
-            NoSender = new NoActorReference("no-sender");
+            Nobody    = new NoActorReference("nobody");
+            NoSender  = new NoActorReference("no-sender");
+            LostActor = new NoActorReference("lost-actor");
         }
         
         public class NoActorReference : IActorReference

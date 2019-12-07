@@ -38,7 +38,7 @@ namespace Caesura.Actors
                 ActorLog.Info(
                     $"Message from \"{letter.Sender.Path.Path}\" containing " +
                     $"{letter.Data.GetType().Name} did not reach target " +
-                    $"at \"{letter.Receiver.Path.Path}\". " +
+                    $"at \"{letter.Receiver.Path}\". " +
                     "Data: {0}", new object[] { letter.Data }
                 );
             };
@@ -56,10 +56,10 @@ namespace Caesura.Actors
     internal class LostLetter
     {
         public IActorReference Sender { get; set; }
-        public IActorReference Receiver { get; set; }
+        public ActorPath Receiver { get; set; }
         public object Data { get; set; }
         
-        public LostLetter(IActorReference sender, IActorReference receiver, object data)
+        public LostLetter(IActorReference sender, ActorPath receiver, object data)
         {
             Sender   = sender;
             Receiver = receiver;

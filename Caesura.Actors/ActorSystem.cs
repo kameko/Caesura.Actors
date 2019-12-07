@@ -221,6 +221,13 @@ namespace Caesura.Actors
                         var token = new ActorQueueToken(this, receiver, typeof(T), (object)data!, sender);
                         Scheduler.Enqueue(container, token);
                     }
+                    else // lost letter
+                    {
+                        var lost = GetActor(Lost.Path);
+                        var letter = new LostLetter(sender, receiver, (object)data!);
+                        var token = new ActorQueueToken(this, receiver, typeof(LostLetter), (object)letter!, sender);
+                        Scheduler.Enqueue(lost!, token);
+                    }
                 }
             }
             else
@@ -248,7 +255,7 @@ namespace Caesura.Actors
         
         internal void Unhandled(IActorReference sender, IActorReference receiver, object message)
         {
-            var lost = new LostLetter(sender, receiver, message);
+            var lost = new LostLetter(sender, receiver.Path, message);
             EnqueueForMessageProcessing(Lost.Path, lost, sender);
         }
         

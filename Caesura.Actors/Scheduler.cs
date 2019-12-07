@@ -84,8 +84,7 @@ namespace Caesura.Actors
                                 break;
                             }
                             
-                            var lost_receiver = System.GetReference(token.Receiver);
-                            var lost_letter = new LostLetter(token.Sender, lost_receiver, token.Data);
+                            var lost_letter = new LostLetter(token.Sender, token.Receiver, token.Data);
                             System.Lost.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
                         }
                     },
@@ -248,8 +247,7 @@ namespace Caesura.Actors
                     {
                         Thread.CurrentThread.Name = token.Receiver.Path;
                         
-                        var lost_receiver = System.GetReference(token.Receiver);
-                        var lost_letter = new LostLetter(token.Sender, lost_receiver, token.Data);
+                        var lost_letter = new LostLetter(token.Sender, token.Receiver, token.Data);
                         System.Lost.ProcessMessage(token.Sender, token.Data, CancelToken.Token);
                     },
                     CancelToken.Token)
