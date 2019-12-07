@@ -28,11 +28,19 @@ namespace Caesura.Actors
                 var parent = system.GetReference(parent_path);
                 if (parent is null)
                 {
-                    system.Log.Warning($"Attempted to warn parent of faulted schematic for {path} but could not find it");
+                    system.Log.Warning($"Attempted to get parent of faulted schematic for {path} but could not find it");
                 }
                 else
                 {
-                    parent.InformError(parent, e);
+                    var grandparent = system.GetReference(parent.Path);
+                    if (grandparent is null)
+                    {
+                        system.Log.Warning($"Attempted to warn grandparent of faulted schematic for {path} but could not find it");
+                    }
+                    else
+                    {
+                        grandparent.InformError(parent, e);
+                    }
                 }
                 return null;
             }
