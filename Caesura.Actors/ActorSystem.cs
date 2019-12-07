@@ -357,7 +357,12 @@ namespace Caesura.Actors
                     return;
                 }
                 
-                faulted_container.Actor.CallPreReload();
+                var pre_reload_result = faulted_container.Actor.CallPreReload();
+                if (pre_reload_result.ProcessingResult == ActorProcessingResult.Errored)
+                {
+                    InformUnhandledError(receiver, faulted_actor, pre_reload_result.Exception!);
+                    return;
+                }
                 
                 var child = faulted_container.Schematic.Create(this, receiver, faulted_actor.Path);
                 if (child is null)
@@ -382,8 +387,19 @@ namespace Caesura.Actors
                 faulted_container.Actor = child;
                 faulted_container.Unfault();
                 
-                child.CallOnCreate();
-                child.CallPostReload();
+                var on_create_result = child.CallOnCreate();
+                if (on_create_result.ProcessingResult == ActorProcessingResult.Errored)
+                {
+                    InformUnhandledError(receiver, faulted_actor, on_create_result.Exception!);
+                    return;
+                }
+                
+                var post_reload_result = child.CallPostReload();
+                if (post_reload_result.ProcessingResult == ActorProcessingResult.Errored)
+                {
+                    InformUnhandledError(receiver, faulted_actor, post_reload_result.Exception!);
+                    return;
+                }
             }
         }
         
