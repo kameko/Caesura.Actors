@@ -33,6 +33,7 @@ namespace Caesura.Actors
         private IScheduler Scheduler { get; set; }
         internal ActorLogger Log { get; set; }
         internal ActorsConfiguration Config { get; private set; }
+        internal CancellationTokenSource CancelToken { get; set; }
         
         internal RootSupervisor Root { get; set; }
         internal LostLetters Lost { get; set; }
@@ -44,12 +45,13 @@ namespace Caesura.Actors
         
         internal ActorSystem(string name, ActorsConfiguration? config)
         {
-            Config    = config ?? ActorsConfiguration.CreateDefault();
+            Config      = config ?? ActorsConfiguration.CreateDefault();
             
-            Name      = ActorPath.Sanitize(name);
-            Location  = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
-            Actors    = new Dictionary<ActorPath, ActorContainer>();
-            Scheduler = new Scheduler();
+            Name        = ActorPath.Sanitize(name);
+            Location    = new ActorPath($"{ActorPath.ProtocolName}://{Name}/");
+            Actors      = new Dictionary<ActorPath, ActorContainer>();
+            CancelToken = new CancellationTokenSource();
+            Scheduler   = new Scheduler();
             
             Scheduler.AssignSystem(this);
             
@@ -101,12 +103,15 @@ namespace Caesura.Actors
         
         public void WaitForSystemShutdown()
         {
-            throw new NotImplementedException();
+            WaitForSystemShutdown(CancelToken.Token);
         }
         
-        public void WaitForSystemShutdown(CancellationTokenSource cancel_token)
+        public void WaitForSystemShutdown(CancellationToken cancel_token)
         {
-            throw new NotImplementedException();
+            while (!CancelToken.IsCancellationRequested && !cancel_token.IsCancellationRequested)
+            {
+                Thread.Sleep(15);
+            }
         }
         
         public IActorReference NewActor(ActorSchematic schematic, string name)
@@ -130,9 +135,11 @@ namespace Caesura.Actors
                 
                 if (container is null)
                 {
-                    // TODO: log
+                    Log.Warning($"Tried to destroy {path} but it is not in the system");
                     return;
                 }
+                
+                Log.Info($"Destroying actor {path}");
                 
                 container.Status = ActorStatus.Destroying;
                 
@@ -164,15 +171,24 @@ namespace Caesura.Actors
         
         public void Shutdown()
         {
-            Log.Info($"Shutting down actor system {Location} ...");
-            Scheduler.Stop();
+            if (!CancelToken.IsCancellationRequested)
+            {
+                Log.Info($"Shutting down actor system {Location} ...");
+                CancelToken.CancelAfter(4900); // TODO: play with this
+                Scheduler.Stop();
+                SystemCount--;
+            }
+            else
+            {
+                Log.Warning($"Attempt to shut down system when it is not running");
+            }
         }
         
         internal ActorContainer? GetActor(ActorPath path)
         {
             if (path.IsRemote)
             {
-                // TODO: log, maybe return a failure?
+                Log.Warning($"Tried to get actor {path} but it is remote");
                 return null;
             }
             lock (ActorLock)
@@ -253,6 +269,7 @@ namespace Caesura.Actors
             {
                 if (Actors.ContainsKey(path))
                 {
+                    Log.Debug($"Attempted to create actor that already exists {path}");
                     throw new InvalidOperationException($"Actor with the path {path} already exists");
                 }
                 
@@ -269,6 +286,9 @@ namespace Caesura.Actors
                 Actors.Add(actor.Path, container);
                 var reference = GetReference(actor.Path);
                 parent.InternalChildren.Add(reference);
+                
+                Log.Info($"Created actor {path}");
+                
                 actor.CallOnCreate();
                 
                 return reference;
@@ -277,6 +297,7 @@ namespace Caesura.Actors
         
         internal void DestroyFaultedActor(ActorPath receiver, IActorReference faulted_actor)
         {
+            // TODO: handle remote
             lock (ActorLock)
             {
                 var receiver_container = GetActor(receiver);
@@ -284,11 +305,22 @@ namespace Caesura.Actors
                 
                 if (receiver_container is null || faulted_container is null)
                 {
-                    // TODO: log
+                    if (receiver_container is null && faulted_container is null)
+                    {
+                        Log.Warning($"Both the receiver and the faulted actor are not in the system");
+                    }
+                    else if (receiver_container is null)
+                    {
+                        Log.Warning($"The receiver is not in the system");
+                    }
+                    else
+                    {
+                        Log.Warning($"The faulted actor is not in the system");
+                    }
                     return;
                 }
                 
-                // TODO: log
+                Log.Info($"Destroying faulted actor {faulted_actor.Path}");
                 
                 faulted_container.Actor.CallOnDestruction();
                 
@@ -308,7 +340,18 @@ namespace Caesura.Actors
                 
                 if (receiver_container is null || faulted_container is null)
                 {
-                    // TODO: log
+                    if (receiver_container is null && faulted_container is null)
+                    {
+                        Log.Warning($"Both the receiver and the faulted actor are not in the system");
+                    }
+                    else if (receiver_container is null)
+                    {
+                        Log.Warning($"The receiver is not in the system");
+                    }
+                    else
+                    {
+                        Log.Warning($"The faulted actor is not in the system");
+                    }
                     return;
                 }
                 
@@ -353,7 +396,7 @@ namespace Caesura.Actors
             
             if (container is null)
             {
-                // TODO: log
+                Log.Warning($"Tried to fault actor {path} but it is not in the system");
                 return;
             }
             
@@ -387,8 +430,10 @@ namespace Caesura.Actors
         
         public void Dispose()
         {
-            Shutdown();
-            SystemCount--;
+            if (!CancelToken.IsCancellationRequested)
+            {
+                Shutdown();
+            }
         }
     }
 }
