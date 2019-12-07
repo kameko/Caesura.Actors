@@ -12,13 +12,17 @@ namespace Caesura.Actors
         public bool ManuallyStartScheduler { get; set; }
         public bool LogLostLetters { get; set; }
         public bool ParallelScheduler { get; set; }
+        public int ParallelSchedulerMaxThreads { get; set; }
+        public bool SpinDownFreeScheduler { get; set; }
         
         public ActorsConfiguration()
         {
-            VerboseLogAllMessages  = false;
-            ManuallyStartScheduler = false;
-            LogLostLetters         = true;
-            ParallelScheduler      = false;
+            VerboseLogAllMessages       = false;
+            ManuallyStartScheduler      = false;
+            LogLostLetters              = true;
+            ParallelScheduler           = false;
+            ParallelSchedulerMaxThreads = -1;
+            SpinDownFreeScheduler       = false;
         }
         
         internal static ActorsConfiguration CreateDefault()

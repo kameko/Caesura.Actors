@@ -149,7 +149,14 @@ namespace Caesura.Actors
         {
             var po = new ParallelOptions();
             po.CancellationToken = CancelToken.Token;
-            po.MaxDegreeOfParallelism = Environment.ProcessorCount;
+            if (System.Config.ParallelSchedulerMaxThreads < 1)
+            {
+                po.MaxDegreeOfParallelism = Environment.ProcessorCount;
+            }
+            else
+            {
+                po.MaxDegreeOfParallelism = System.Config.ParallelSchedulerMaxThreads;
+            }
             
             while (IsRunning)
             {
@@ -174,9 +181,11 @@ namespace Caesura.Actors
                 {
                     if (Queue.Count == 0)
                     {
-                        // TODO: check if it's been like, a second or two
-                        // if so, Spindown
-                        // Also have an option for not spinning down ever
+                        if (System.Config.SpinDownFreeScheduler)
+                        {
+                            // TODO: check if it's been like, a second or two
+                            // if so, Spindown
+                        }
                         
                         continue;
                     }
