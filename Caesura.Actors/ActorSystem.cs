@@ -17,10 +17,7 @@ namespace Caesura.Actors
     // - Scarlet
     //
     // TODO: persistance handling, by saving the user's
-    // IStateSerializeHandler/IStateDeserializeHandler
-    // objects
-    // TODO: config, including allowing a custom scheduler.
-    // TODO: Actors isn't thread-safe, look into that.
+    // IStateSerializeHandler/IStateDeserializeHandler objects
     
     public class ActorSystem : IDisposable
     {
