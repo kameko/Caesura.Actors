@@ -42,6 +42,11 @@ namespace Caesura.Actors
             {
                 // Do nothing.
             }
+            
+            public override string ToString()
+            {
+                return Path.ToString();
+            }
         }
     }
 }
