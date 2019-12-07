@@ -16,6 +16,7 @@ namespace Caesura.Actors.Networking
         // TODO: we'll cache the entire networked actor system here for easier, quicker lookup.
         // To ensure consistency, have each node ask the entire system for it's local actor system
         // periodically, default every minute.
+        // TODO: have the config choose between compact and readable JSON for IPC
         
         private ActorSystem System { get; set; }
         

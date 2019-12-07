@@ -15,9 +15,11 @@ namespace Caesura.Actors
     // - Oozei (大勢 / おおぜい) - Many people
     // - Consol - Corruption of "console" to match Solace
     // - Scarlet
+    // - Plasma - because the actors are basically the blood cells of my projects
     //
     // TODO: persistance handling, by saving the user's
-    // IStateSerializeHandler/IStateDeserializeHandler objects
+    // IStateSerializeHandler/IStateDeserializeHandler objects.
+    // Have the user plug in some serialization handler for persisting/restoring data.
     // TODO: this could use some refactoring, it's a bit of a god class
     
     public class ActorSystem : IDisposable
