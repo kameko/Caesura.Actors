@@ -15,16 +15,16 @@ namespace Caesura.Actors
             Factory = factory;
         }
         
-        internal Actor? Create(ActorSystem system)
+        internal Actor? Create(ActorSystem system, ActorPath path)
         {
             try
             {
                 var actor = Factory.Invoke();
                 return actor;
             }
-            catch
+            catch (Exception e)
             {
-                // TODO: log error.
+                system.Log.Warning(e, $"Factory could not instance actor {path}");
                 return null;
             }
         }

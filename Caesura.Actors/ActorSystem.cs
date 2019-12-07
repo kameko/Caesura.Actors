@@ -271,7 +271,7 @@ namespace Caesura.Actors
                 }
                 
                 var self = GetReference(parent.Path);
-                var actor = child.Create(this);
+                var actor = child.Create(this, path);
                 
                 if (actor is null)
                 {
@@ -354,7 +354,7 @@ namespace Caesura.Actors
                 
                 faulted_container.Actor.CallPreReload();
                 
-                var child = faulted_container.Schematic.Create(this);
+                var child = faulted_container.Schematic.Create(this, faulted_actor.Path);
                 if (child is null)
                 {
                     Log.Warning($"Attempted to re-create actor of {faulted_actor.Path} but it failed");
