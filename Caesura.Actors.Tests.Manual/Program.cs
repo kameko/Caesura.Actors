@@ -196,8 +196,6 @@ namespace Caesura.Actors.Tests.Manual
             Become(Behavior1);
             ActorLog.Info("Hello, world!");
             // throw new Exception("oops!");
-            
-            // FIXME: infinite loop if restarted
             // throw new Exception("RESTART ME");
         }
         
@@ -205,8 +203,6 @@ namespace Caesura.Actors.Tests.Manual
         {
             ActorLog.Info("Preloading");
             // throw new Exception("oops!");
-            
-            // FIXME: ditto
             // throw new Exception("RESTART ME");
         }
         
@@ -214,8 +210,6 @@ namespace Caesura.Actors.Tests.Manual
         {
             ActorLog.Info("Post Reloading");
             // throw new Exception("oops!");
-            
-            // FIXME: ditto
             // throw new Exception("RESTART ME");
         }
         

@@ -364,10 +364,12 @@ namespace Caesura.Actors
                     return;
                 }
                 
+                var parent_path = GetReference(receiver_container.Actor.Path);
+                
                 var pre_reload_result = faulted_container.Actor.CallPreReload();
                 if (pre_reload_result.ProcessingResult == ActorProcessingResult.Errored)
                 {
-                    InformUnhandledError(receiver, faulted_actor, pre_reload_result.Exception!);
+                    InformUnhandledError(receiver_container.Actor.InternalParent.Path, parent_path, pre_reload_result.Exception!);
                     return;
                 }
                 
@@ -388,7 +390,6 @@ namespace Caesura.Actors
                     return;
                 }
                 
-                var parent_path = GetReference(receiver_container.Actor.Path);
                 child.Populate(this, parent_path, faulted_container.Actor.Path);
                 
                 faulted_container.Actor = child;
@@ -397,14 +398,14 @@ namespace Caesura.Actors
                 var on_create_result = child.CallOnCreate();
                 if (on_create_result.ProcessingResult == ActorProcessingResult.Errored)
                 {
-                    InformUnhandledError(receiver, faulted_actor, on_create_result.Exception!);
+                    InformUnhandledError(receiver_container.Actor.InternalParent.Path, parent_path, on_create_result.Exception!);
                     return;
                 }
                 
                 var post_reload_result = child.CallPostReload();
                 if (post_reload_result.ProcessingResult == ActorProcessingResult.Errored)
                 {
-                    InformUnhandledError(receiver, faulted_actor, post_reload_result.Exception!);
+                    InformUnhandledError(receiver_container.Actor.InternalParent.Path, parent_path, post_reload_result.Exception!);
                     return;
                 }
             }
