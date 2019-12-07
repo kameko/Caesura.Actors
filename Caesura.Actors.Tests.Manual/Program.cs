@@ -8,7 +8,7 @@ namespace Caesura.Actors.Tests.Manual
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Beginning test...");
+            // Console.WriteLine("Beginning test...");
             
             var test1 = new Test1();
             test1.Start();
@@ -88,6 +88,7 @@ namespace Caesura.Actors.Tests.Manual
         public void SetupLogger()
         {
             ActorLogger.DefaultLoggerEnabled = true;
+            ActorLogger.VERBOSE = true;
         }
     }
     

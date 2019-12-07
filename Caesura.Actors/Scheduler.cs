@@ -28,13 +28,13 @@ namespace Caesura.Actors
             PersistedActors = new List<ActorPath>();
             SchedulerThread = new Thread(SchedulerHandler);
             SchedulerThread.IsBackground = true;
-            SchedulerThread.Name         = CreateName();
             CancelToken     = new CancellationTokenSource();
         }
         
         public void AssignSystem(ActorSystem system)
         {
-            System = system;
+            System               = system;
+            SchedulerThread.Name = CreateName();
         }
         
         public void Start()
@@ -43,19 +43,22 @@ namespace Caesura.Actors
             {
                 try
                 {
+                    System.Log.Debug($"Starting scheduler {SchedulerThread.Name}");
                     CancelToken = new CancellationTokenSource();
                     IsRunning = true;
                     SchedulerThread.Start();
                 }
-                catch (ThreadStateException)
+                catch (ThreadStateException e)
                 {
                     // We don't care
+                    System.Log.Verbose(e, $"{SchedulerThread.Name}");
                 }
             }
         }
         
         public void Stop()
         {
+            System.Log.Debug($"Stopping scheduler {SchedulerThread.Name}");
             IsRunning = false;
             CancelToken.Cancel();
         }
@@ -142,6 +145,7 @@ namespace Caesura.Actors
                     {
                         // TODO: check if it's been like, a second or two
                         // if so, Spindown
+                        // Also have an option for not spinning down ever
                         
                         continue;
                     }
@@ -150,6 +154,9 @@ namespace Caesura.Actors
                         lock (PersistedLock)
                         {
                             // TODO: Parallel.For instead?
+                            // well, give the user an option, that would be bad if the
+                            // workload isn't heavy.
+                            
                             var container = Queue.First();
                             
                             if (PersistedActors.Exists(x => x == container.Actor.Path))
@@ -234,15 +241,8 @@ namespace Caesura.Actors
         
         private string CreateName()
         {
-            var name = "Actor Scheduler";
-            if (ActorSystem.SystemCount == 0)
-            {
-                return name;
-            }
-            else
-            {
-                return $"{name} {ActorSystem.SystemCount + 1}";
-            }
+            var name = $"scheduler.{ActorSystem.SystemCount}.{System.Location}";
+            return name;
         }
     }
 }
