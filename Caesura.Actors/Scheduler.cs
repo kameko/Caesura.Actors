@@ -143,6 +143,26 @@ namespace Caesura.Actors
                         PersistedActors.Remove(token);
                     }
                 }
+                else
+                {
+                    System.Log.Debug($"Attempted to end session for actor {actor.Path} but it was not found");
+                }
+            }
+        }
+        
+        public void DestroySession(Actor actor)
+        {
+            lock (PersistedLock)
+            {
+                var token = PersistedActors.Find(x => x.Path == actor.Path);
+                if (!(token is null))
+                {
+                    PersistedActors.Remove(token);
+                }
+                else
+                {
+                    System.Log.Debug($"Attempted to destroy session for actor {actor.Path} but it was not found");
+                }
             }
         }
         
@@ -152,7 +172,9 @@ namespace Caesura.Actors
             po.CancellationToken = CancelToken.Token;
             if (System.Config.ParallelSchedulerMaxThreads < 1)
             {
-                po.MaxDegreeOfParallelism = Environment.ProcessorCount;
+                // do nothing
+                // not recommended
+                // po.MaxDegreeOfParallelism = Environment.ProcessorCount;
             }
             else
             {

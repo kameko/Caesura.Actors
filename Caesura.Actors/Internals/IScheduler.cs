@@ -14,5 +14,6 @@ namespace Caesura.Actors.Internals
         void Enqueue(ActorContainer container, ActorQueueToken token);
         void BeginSessionPersistence(Actor actor);
         void EndSessionPersistence(Actor actor);
+        void DestroySession(Actor actor);
     }
 }

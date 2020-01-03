@@ -12,10 +12,17 @@ namespace Caesura.Actors
     // - Horizon
     // - Sundry (means "many")
     // - Legion
+    // - Legio - Latin for "legion"
+    // - Colony
+    // - Zima
     // - Oozei (大勢 / おおぜい) - Many people
     // - Consol - Corruption of "console" to match Solace
     // - Scarlet
     // - Plasma - because the actors are basically the blood cells of my projects
+    // - Purazuma - Roumaji of the katakana of "plasma" (プラズマ)
+    // - Kessho / Kesshou (血漿 / けっしょう) - Blood plasma
+    //
+    // Currently considering Purazuma the most
     //
     // TODO: persistance handling, by saving the user's
     // IStateSerializeHandler/IStateDeserializeHandler objects.
